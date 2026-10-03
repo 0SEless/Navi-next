@@ -9,6 +9,7 @@ import { isSecondaryPublicPath, PRIMARY_NAV_ITEMS, PRIMARY_NAV_PATHS } from '@/l
 import { usePathname, useRouter } from 'next/navigation'
 import { NavigationMapHost, NavigationMapProvider } from '@/components/map/NavigationMap'
 import PersistentCampusScene from '@/components/map/PersistentCampusScene'
+import { PublicCampusRuntimeStatus } from '@/components/map/PublicCampusRuntimeStatus'
 
 const pathToTab: Record<string, TabId> = Object.fromEntries(
   PRIMARY_NAV_ITEMS.map((item) => [item.path, item.id]),
@@ -69,6 +70,7 @@ export function AdaptiveShell({ children }: AdaptiveShellProps) {
           <main className="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-y-auto">
             <NavigationMapHost />
             <PersistentCampusScene />
+            <PublicCampusRuntimeStatus />
             <div className="relative z-10 flex min-h-0 w-full min-w-0 flex-1 flex-col">
               {children}
             </div>

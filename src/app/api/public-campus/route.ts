@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { validateNavigationArtifacts, type ArtifactValidationResult } from '@navi/compiler'
 
+// Keep these sequential campus reads in the same Vercel region as Supabase.
+export const preferredRegion = 'hnd1'
+
 /**
  * GET /api/public-campus?campus_id=X
  *
@@ -65,6 +68,7 @@ interface PublishedArtifacts {
   qrIndex?: unknown
   components?: unknown[]
   doors?: unknown[]
+  traces?: unknown[]
 }
 
 type PublishedLookupResult =
@@ -200,24 +204,49 @@ function validatePublishedArtifactsForRead(
   return { ...validation, valid: errors.length === 0, errors }
 }
 
+type RequestTimings = Record<string, number>
+
+function timedJsonResponse(
+  body: unknown,
+  status: number,
+  requestStartedAt: number,
+  timings: RequestTimings,
+) {
+  const serializationStartedAt = performance.now()
+  const serializedBody = JSON.stringify(body)
+  timings.serialize = performance.now() - serializationStartedAt
+
+  const response = new NextResponse(serializedBody, {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  })
+
+  // Stage names and durations are safe diagnostics. Keep them out of production
+  // responses unless a future rollout explicitly needs them there.
+  if (process.env.NODE_ENV !== 'production') {
+    const metrics = Object.entries(timings)
+      .map(([name, duration]) => `${name};dur=${Math.max(0, duration).toFixed(1)}`)
+    metrics.push(`handler;dur=${Math.max(0, performance.now() - requestStartedAt).toFixed(1)}`)
+    response.headers.set('Server-Timing', metrics.join(', '))
+  }
+
+  return response
+}
+
 function publicReadError(
   code: 'PUBLIC_CAMPUS_READ_FAILED' | 'PUBLIC_CAMPUS_ARTIFACT_INVALID',
-  status: 500 | 503,
 ) {
-  return NextResponse.json(
-    {
-      error: code,
-      message: code === 'PUBLIC_CAMPUS_READ_FAILED'
-        ? 'Public campus data is temporarily unavailable.'
-        : 'Published navigation artifacts are invalid.',
-    },
-    { status },
-  )
+  return {
+    error: code,
+    message: code === 'PUBLIC_CAMPUS_READ_FAILED'
+      ? 'Public campus data is temporarily unavailable.'
+      : 'Published navigation artifacts are invalid.',
+  }
 }
 
 // ── Response builder ──
 
-function buildResponse(campusId: string, source: string, data: {
+function buildResponseBody(campusId: string, source: string, data: {
   campusName?: string | null
   buildings: unknown[]
   nodes: unknown[]
@@ -230,7 +259,7 @@ function buildResponse(campusId: string, source: string, data: {
   artifacts?: PublishedArtifacts
   revision?: string | number | null
 }) {
-  return NextResponse.json({
+  return {
     campusId,
     campusName: data.campusName ?? null,
     source,
@@ -244,42 +273,46 @@ function buildResponse(campusId: string, source: string, data: {
     pois: data.pois ?? [],
     boundary: data.boundary,
     artifacts: data.artifacts ?? null,
-  })
+  }
 }
 
 // ── Main handler ──
 
 export async function GET(request: NextRequest) {
+  const requestStartedAt = performance.now()
+  const timings: RequestTimings = {}
   const { searchParams } = new URL(request.url)
   const campusId = searchParams.get('campus_id')
 
   if (!campusId) {
-    return NextResponse.json(
-      { error: 'campus_id is required' },
-      { status: 400 },
-    )
+    return timedJsonResponse({ error: 'campus_id is required' }, 400, requestStartedAt, timings)
   }
 
   // ── Source 1: published_maps (exclusive) ──
   // If a published map exists, the response is produced exclusively from it.
   // No other sources are consulted. No merging.
+  const publishedStartedAt = performance.now()
   const published = await readPublishedMaps(campusId)
+  timings.published = performance.now() - publishedStartedAt
   if (published.status === 'error') {
-    return publicReadError('PUBLIC_CAMPUS_READ_FAILED', 503)
+    return timedJsonResponse(publicReadError('PUBLIC_CAMPUS_READ_FAILED'), 503, requestStartedAt, timings)
   }
 
   if (published.status === 'found') {
+    const validationStartedAt = performance.now()
     const validation = validatePublishedArtifactsForRead(campusId, published.artifacts)
+    timings.validation = performance.now() - validationStartedAt
     if (!validation.valid) {
       console.warn('[public-campus] published artifact rejected')
-      return publicReadError('PUBLIC_CAMPUS_ARTIFACT_INVALID', 500)
+      return timedJsonResponse(publicReadError('PUBLIC_CAMPUS_ARTIFACT_INVALID'), 500, requestStartedAt, timings)
     }
 
+    const transformationStartedAt = performance.now()
     const artifacts = published.artifacts as PublishedArtifacts
     const graph = artifacts.graph ?? {}
     const buildings = artifacts.buildingIndex?.buildings ?? []
 
-    return buildResponse(campusId, 'published_maps', {
+    const body = buildResponseBody(campusId, 'published_maps', {
       campusName: resolveCampusDisplayName(
         campusId,
         artifacts.campusName,
@@ -290,7 +323,7 @@ export async function GET(request: NextRequest) {
       buildings,
       nodes: graph.nodes ?? [],
       edges: graph.edges ?? [],
-      traces: graph.traces ?? [],
+      traces: artifacts.traces ?? graph.traces ?? [],
       pois: artifacts.poiIndex?.points ?? graph.pois ?? [],
       boundary: graph.metadata?.boundingBox ?? null,
       // Components and doors are additive compiler projections. Older published
@@ -300,19 +333,24 @@ export async function GET(request: NextRequest) {
       artifacts,
       revision: artifacts.metadata?.revision ?? null,
     })
+    timings.transform = performance.now() - transformationStartedAt
+    return timedJsonResponse(body, 200, requestStartedAt, timings)
   }
 
   // ── Source 2: graph_snapshots (fallback only) ──
   // Used only when the compiler hasn't run. Transformed to PublishedCampus
   // shape. Not merged with anything.
+  const snapshotStartedAt = performance.now()
   const snapshot = await readGraphSnapshot(campusId)
+  timings.snapshot = performance.now() - snapshotStartedAt
   if (snapshot.status === 'error') {
-    return publicReadError('PUBLIC_CAMPUS_READ_FAILED', 503)
+    return timedJsonResponse(publicReadError('PUBLIC_CAMPUS_READ_FAILED'), 503, requestStartedAt, timings)
   }
 
   if (snapshot.status === 'found') {
+    const transformationStartedAt = performance.now()
     const data = snapshot.snapshot
-    return buildResponse(campusId, 'graph_snapshots', {
+    const body = buildResponseBody(campusId, 'graph_snapshots', {
       campusName: resolveCampusDisplayName(campusId, data.campusName, data.name),
       buildings: data.buildings ?? [],
       nodes: data.nodes ?? [],
@@ -324,11 +362,15 @@ export async function GET(request: NextRequest) {
       doors: data.doors,
       revision: null,
     })
+    timings.transform = performance.now() - transformationStartedAt
+    return timedJsonResponse(body, 200, requestStartedAt, timings)
   }
 
   // ── Empty ──
-  return NextResponse.json(
+  return timedJsonResponse(
     { campusId, campusName: null, source: 'empty', revision: null, buildings: [], components: [], nodes: [], edges: [], boundary: null },
-    { status: 200 },
+    200,
+    requestStartedAt,
+    timings,
   )
 }

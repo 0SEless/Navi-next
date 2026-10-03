@@ -6,7 +6,6 @@ import {
   deserializeDocument,
 } from '@navi/core'
 import { CommandDispatcher, CommandRegistry, DocumentEventBus } from '@navi/editor'
-import { buildingDeleteHandler } from '../commands/building-handlers'
 import {
   featureCreateHandler,
   featureUpdateHandler,
@@ -203,37 +202,5 @@ describe('Studio Save/Reload Persistence & Feature Deletion', () => {
     expect(stair.id).toBe('stair-legacy')
     expect(stair.levels[0].polygon?.points).toHaveLength(4)
     expect(stair.levels[0].drawing?.definitionId).toBe('stair')
-  })
-
-  it('persists a building delete through GraphAdapter sync and hard reload without resurrecting it', () => {
-    const doc = createTestDoc()
-    const other = structuredClone(doc.buildings[0])
-    other.id = 'bld-2'
-    other.name = 'Library Hall'
-    other.code = 'LIB'
-    doc.buildings.push(other)
-
-    const graph = new Graph()
-    const adapter = new GraphAdapter(graph)
-    adapter.sync(doc)
-    expect(graph.buildings.map((building) => building.id)).toEqual(['bld-1', 'bld-2'])
-
-    const registry = new CommandRegistry()
-    registry.register(buildingDeleteHandler)
-    const dispatcher = new CommandDispatcher(registry, doc, new DocumentEventBus())
-    const result = dispatcher.execute({
-      id: 'building.delete',
-      label: 'Delete Building',
-      payload: { buildingId: 'bld-1' },
-    })
-
-    expect(result.success).toBe(true)
-    expect(doc.buildings.map((building) => building.id)).toEqual(['bld-2'])
-
-    adapter.sync(doc)
-    expect(graph.buildings.map((building) => building.id)).toEqual(['bld-2'])
-
-    const reloadedDoc = createDocument(Graph.fromJSON(graph.toJSON()))
-    expect(reloadedDoc.buildings.map((building) => building.id)).toEqual(['bld-2'])
   })
 })

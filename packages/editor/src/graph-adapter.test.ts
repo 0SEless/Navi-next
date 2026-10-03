@@ -143,57 +143,6 @@ describe('GraphAdapter', () => {
     metadata: {},
   })
 
-  it('reuses trace and edge identities across an unchanged full-document sync', () => {
-    const document = roadOnlyDocument([road('stable-road', [
-      { lat: 0, lng: 0 },
-      { lat: 0.001, lng: 0.001 },
-      { lat: 0.002, lng: 0.002 },
-    ])])
-    const graph = new Graph()
-    graph.campusId = document.metadata.campusId
-    const adapter = new GraphAdapter(graph)
-
-    adapter.sync(document)
-    const originalNodeIds = graph.nodes.map((node) => node.id).sort()
-    const originalEdgeIds = graph.edges.map((edge) => edge.id).sort()
-    expect(originalNodeIds).toHaveLength(3)
-    expect(originalEdgeIds).toHaveLength(2)
-
-    adapter.sync(document)
-
-    expect(graph.nodes.map((node) => node.id).sort()).toEqual(originalNodeIds)
-    expect(graph.edges.map((edge) => edge.id).sort()).toEqual(originalEdgeIds)
-  })
-
-  it('does not reuse an edge identity when an endpoint identity is ambiguous', () => {
-    const document = roadOnlyDocument([road('ambiguous-road', [
-      { lat: 0, lng: 0 },
-      { lat: 0.001, lng: 0.001 },
-      { lat: 0.002, lng: 0.002 },
-    ])])
-    const graph = new Graph()
-    graph.campusId = document.metadata.campusId
-    const adapter = new GraphAdapter(graph)
-    adapter.sync(document)
-
-    const priorNode = graph.nodes.find((node) => node.metadata?.traceId === 'ambiguous-road')!
-    const priorIncidentEdgeIds = graph.edges
-      .filter((edge) => edge.from === priorNode.id || edge.to === priorNode.id)
-      .map((edge) => edge.id)
-    expect(priorIncidentEdgeIds).toHaveLength(1)
-    graph.setNodes([...graph.nodes, { ...priorNode, id: 'duplicate-prior-node' }])
-
-    adapter.sync(document)
-
-    const rebuiltNode = graph.nodes.find((node) =>
-      node.metadata?.traceId === 'ambiguous-road' &&
-      node.position.lat === priorNode.position.lat &&
-      node.position.lng === priorNode.position.lng,
-    )!
-    expect(rebuiltNode.id).not.toBe(priorNode.id)
-    expect(graph.edges.some((edge) => priorIncidentEdgeIds.includes(edge.id))).toBe(false)
-  })
-
   function endpointNode(graph: Graph, traceId: string, position: { lat: number; lng: number }) {
     return graph.nodes.find(node =>
       (node.metadata?.traceId === traceId || (node.metadata?.traceIds as string[] | undefined)?.includes(traceId)) &&

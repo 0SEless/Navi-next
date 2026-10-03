@@ -647,26 +647,6 @@ export function FloorEditorCanvas({ building, activeFloorId, floor, tool, layers
   // Wire drawing interactions (state-driven so hook sees map after init)
   const { drawMode, pendingPolygon, rectangleMessage, confirm: confirmDrawing, cancel: cancelDrawing, removeLastPoint, routeConnectionPrompt, acceptRouteConnection, declineRouteConnection } = useFloorDrawing({ map: mapRef.current, mapReady, buildingId: building.id, campusId, floor, tool, onSelect, editEngine, snapMode, onSnapModeChange, pendingRouteAnchor, onRouteStartRejected, onRouteAccessAssigned, onEntranceAccessRequired })
 
-  // Phase 3C — transient authored interaction gate: an unfinished draw gesture
-  // (placing-points / placing-polygon) blocks server autosave until it commits
-  // or is cancelled. Tool selection alone (drawMode === 'idle') never blocks.
-  useEffect(() => {
-    const autosave = (editor as unknown as { services?: { get: (id: string) => unknown } }).services?.get('autosave') as
-      | { setTransientInteractionActive?: (active: boolean) => void }
-      | undefined
-    autosave?.setTransientInteractionActive?.(drawMode !== 'idle')
-  }, [editor, drawMode])
-
-  // Teardown safety: never leave a stuck transient gate for the next lifecycle.
-  useEffect(() => {
-    return () => {
-      const autosave = (editor as unknown as { services?: { get: (id: string) => unknown } }).services?.get('autosave') as
-        | { setTransientInteractionActive?: (active: boolean) => void }
-        | undefined
-      autosave?.setTransientInteractionActive?.(false)
-    }
-  }, [editor])
-
   // ---- New Architecture: Linear Geometry Editing for Hallways ----
 
   // P1-T3: meter-space projection — the path editor runs in building-local

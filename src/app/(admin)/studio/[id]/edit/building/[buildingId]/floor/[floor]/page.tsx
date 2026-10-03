@@ -169,8 +169,8 @@ function FloorEditorBridgeSession({
   }, [context, floorScope, buildingId, floor, adoptionVersion])
 
   // Route transitions and tab exits can unmount the editor without giving the
-  // normal command autosave debounce a chance to run. Phase 3B: the committed
-  // LOCAL draft is made durable here — no server synchronization from teardown.
+  // normal command autosave debounce a chance to run. Reuse the existing
+  // GraphAdapter/local graph-store path for a synchronous best-effort flush.
   useEffect(() => {
     const flushLocalPersistence = () => {
       const state = useGraphStore.getState()
@@ -184,7 +184,6 @@ function FloorEditorBridgeSession({
       ga.sync(context.document, floorScope)
       const nextState = useGraphStore.getState()
       nextState.setAuthoredDocument(context.document)
-      useGraphStore.getState().persistLocalDraft()
       useGraphStore.getState().recordAuthoredMutation('floor', buildingId, floor)
       void useGraphStore.getState().save({ trigger: 'autosave' }).catch((error: unknown) => {
         console.warn('Floor editor exit persistence failed:', error)

@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import type maplibregl from 'maplibre-gl'
 import type { BuildingRenderData } from '@/components/map/NavigationRenderModel'
+import { whenMapStyleReady } from '@/components/map/mapStyleReadiness'
 
 // ── Constants ──────────────────────────────────────────────────
 
@@ -85,11 +86,14 @@ export function BuildingLayer({
   onBuildingClick,
 }: BuildingLayerProps) {
   const initializedRef = useRef(false)
-  // Track whether we've ever populated data, to handle late-arriving buildings
-  const hasPopulatedRef = useRef(false)
+  const buildingsRef = useRef(buildings)
   const selectedBuildingIdRef = useRef(selectedBuildingId ?? null)
   const selectedFeatureIdRef = useRef<string | null>(null)
   const onBuildingClickRef = useRef(onBuildingClick)
+
+  useLayoutEffect(() => {
+    buildingsRef.current = buildings
+  }, [buildings])
 
   useLayoutEffect(() => {
     selectedBuildingIdRef.current = selectedBuildingId ?? null
@@ -99,23 +103,25 @@ export function BuildingLayer({
     onBuildingClickRef.current = onBuildingClick
   }, [onBuildingClick])
 
-  // Initialize sources and layers — runs ONCE per map instance
+  const setData = useCallback(() => {
+    if (!map || !initializedRef.current) return
+    const source = map.getSource(SRC) as maplibregl.GeoJSONSource | undefined
+    if (!source) return
+    source.setData(buildGeoJSON(buildingsRef.current))
+    map.triggerRepaint()
+  }, [map])
+
+  // Source updates from sibling layers can temporarily make isStyleLoaded false
+  // after the one-shot map load. Wait for current style readiness, not a new load.
   useEffect(() => {
     if (!map) return
     if (initializedRef.current) return
-    if (map.getSource(SRC)) {
-      initializedRef.current = true
-      return
-    }
 
     const init = () => {
       if (initializedRef.current) return
-      if (map.getSource(SRC)) {
-        initializedRef.current = true
-        return
+      if (!map.getSource(SRC)) {
+        map.addSource(SRC, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
       }
-
-      map.addSource(SRC, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
 
       // Fill layer
       if (!map.getLayer(LYR.FILL)) {
@@ -182,18 +188,15 @@ export function BuildingLayer({
       }
 
       initializedRef.current = true
+      // Delayed initialization must populate without a subsequent React render.
+      setData()
     }
 
-    // If style is already loaded, init immediately; otherwise wait
-    if (map.isStyleLoaded()) {
-      init()
-    } else {
-      map.on('load', init)
-    }
+    const stopWaitingForStyle = whenMapStyleReady(map, init)
 
     return () => {
+      stopWaitingForStyle()
       try {
-        map.off('load', init)
         // Cleanup layers and source
         ;[LYR.LABELS, LYR.EXTRUSION, LYR.OUTLINE, LYR.FILL].forEach(l => {
           if (map.getLayer(l)) map.removeLayer(l)
@@ -201,37 +204,14 @@ export function BuildingLayer({
         if (map.getSource(SRC)) map.removeSource(SRC)
       } catch {}
       initializedRef.current = false
-      hasPopulatedRef.current = false
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map])
+  }, [map, setData])
 
-  // Sync building data — runs when buildings change OR after init completes
-  const setData = useCallback(() => {
-    if (!map || !initializedRef.current) return
-    const src = map.getSource(SRC) as maplibregl.GeoJSONSource | undefined
-    if (!src) return
-
-    const data = buildGeoJSON(buildings)
-    src.setData(data)
-    hasPopulatedRef.current = true
-    map.triggerRepaint()
-  }, [map, buildings])
-
-  // Whenever buildings change, push data if initialized; otherwise a
-  // post-init effect will pick it up.
+  // Handle data arriving after the map is ready; init handles the other ordering.
   useEffect(() => {
     setData()
-  }, [setData])
-
-  // Post-init safety net: if init just finished and we haven't populated yet,
-  // push data now. This handles the case where buildings arrived before the
-  // map style loaded.
-  useEffect(() => {
-    if (!map || !initializedRef.current || hasPopulatedRef.current) return
-    setData()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, buildings])
+  }, [buildings, setData])
 
   // The listener is stable for the lifetime of the map. The desired selection
   // is read from a ref so route/store changes do not churn styledata handlers.

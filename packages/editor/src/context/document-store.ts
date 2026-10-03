@@ -40,23 +40,6 @@ export class DocumentStore {
   }
 
   /**
-   * Replace the document from an authoritative graph/server adoption.
-   *
-   * This keeps the CampusDocument object identity used by every editor
-   * service, but deliberately does not create a revision or emit
-   * `revision.committed`: server adoption/hydration is not a user-authored
-   * mutation and must not schedule autosave. Subscribers still re-render from
-   * the new authoritative contents.
-   */
-  replaceAuthoritative(snapshot: CampusDocument): void {
-    for (const key of Object.keys(this.document)) {
-      Reflect.deleteProperty(this.document, key)
-    }
-    Object.assign(this.document, structuredClone(snapshot))
-    this.listeners.forEach((l) => l())
-  }
-
-  /**
    * Restore an editor-owned snapshot without creating a new revision.
    *
    * This is intentionally limited to transaction rollback. Callers must not

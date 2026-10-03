@@ -10,8 +10,10 @@ import { ElevatorLayer } from '@/components/map/layers/ElevatorLayer'
 import { DoorLayer } from '@/components/map/layers/DoorLayer'
 import { WallLayer } from '@/components/map/layers/WallLayer'
 import { OpeningLayer } from '@/components/map/layers/OpeningLayer'
+import { PublicFloorPlanLayer } from '@/components/map/layers/PublicFloorPlanLayer'
 import { EntranceLayer } from '@/components/map/layers/EntranceLayer'
 import { POILayer } from '@/components/map/layers/POILayer'
+import { AuthoredRoadLayer } from '@/components/map/layers/AuthoredRoadLayer'
 import { RouteLine } from '@/components/map/RouteLine'
 import NavigationPositionMarker from '@/components/map/NavigationPositionMarker'
 import { NavigationProvider, useNavigationContext } from '@/components/map/NavigationContext'
@@ -222,14 +224,26 @@ const ExploreLayers = memo(function ExploreLayers({
     ? model.entrances.filter((entrance) => entrance.floor === activeFloor
         && (!indoorContext.buildingId || entrance.buildingId === indoorContext.buildingId))
     : [], [activeFloor, indoorContext.active, indoorContext.buildingId, model.entrances])
+  const outdoorPois = useMemo(
+    () => bundle.poi.filter((poi) => poi.scope === 'outdoor'),
+    [bundle.poi],
+  )
 
   return (
     <div data-nav-segment={navigationSegment}>
+      <AuthoredRoadLayer map={map} traces={bundle.traces ?? []} />
       <BuildingLayer
         map={map}
         buildings={model.buildings}
         selectedBuildingId={navigationTargetBuildingId ?? selectedBuildingId}
         onBuildingClick={handleBuildingClick}
+      />
+      <PublicFloorPlanLayer
+        map={map}
+        building={indoorContext.active
+          ? bundle.buildings.find((building) => building.id === indoorContext.buildingId)
+          : undefined}
+        level={activeFloor}
       />
       <RoomLayer map={map} rooms={model.indoor.rooms} floor={activeFloor} indoorContext={indoorContext} />
       <HallwayLayer map={map} hallways={model.indoor.hallways} floor={activeFloor} indoorContext={indoorContext} />
@@ -242,6 +256,7 @@ const ExploreLayers = memo(function ExploreLayers({
       <POILayer
         map={map}
         pois={indoorContext.active ? model.indoor.pois : []}
+        outdoorPois={outdoorPois}
         buildingId={indoorContext.buildingId}
         floor={activeFloor}
         revealedIds={revealedPoiIds}

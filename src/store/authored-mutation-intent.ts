@@ -13,7 +13,6 @@
 import {
   guardCrossScopeDestruction,
   type GuardCollections,
-  type GuardRejectedRemovalObserver,
   type GuardScope,
 } from '../lib/save-safety-guard'
 
@@ -85,51 +84,7 @@ export function intentsIncludedInSave(
 
 export type AuthoredSaveEvaluation =
   | { allowed: true }
-  | {
-      allowed: false
-      reason: string
-      removed: Array<{ type: string; ids: string[] }>
-      diagnostic: AuthoredSaveDiagnostic
-    }
-
-type GuardCollectionKind = keyof GuardCollections
-type AuthoredScopeKind = AuthoredMutationIntent['kind']
-
-export type AuthoredSaveDiagnostic = {
-  reason: 'removed-entity-outside-pending-scope'
-  removedEntityCount: number
-  removedEntityKinds: Record<GuardCollectionKind, number>
-  coveredRemovalCount: number
-  coveredEntityKinds: Record<GuardCollectionKind, number>
-  uncoveredRemovalCount: number
-  uncoveredEntityKinds: Record<GuardCollectionKind, number>
-  removedFromAcknowledgedBaselineCount: number
-  pendingScopeCount: number
-  pendingScopeKinds: Record<AuthoredScopeKind, number>
-  allRemovalsCovered: boolean
-}
-
-const GUARD_COLLECTION_KINDS = ['buildings', 'components', 'nodes', 'edges', 'traces', 'doors'] as const satisfies readonly GuardCollectionKind[]
-const AUTHORED_SCOPE_KINDS = ['building', 'floor', 'door', 'route', 'poi', 'outdoor'] as const satisfies readonly AuthoredScopeKind[]
-
-function zeroCounts<K extends string>(kinds: readonly K[]): Record<K, number> {
-  return Object.fromEntries(kinds.map((kind) => [kind, 0])) as Record<K, number>
-}
-
-function countRemovedByKind(previous: GuardCollections, candidate: GuardCollections): Record<GuardCollectionKind, number> {
-  const counts = zeroCounts(GUARD_COLLECTION_KINDS)
-  for (const type of GUARD_COLLECTION_KINDS) {
-    const remaining = new Set((candidate[type] ?? []).map((entity) => entity.id))
-    for (const entity of previous[type] ?? []) {
-      if (!remaining.has(entity.id)) counts[type] += 1
-    }
-  }
-  return counts
-}
-
-function countValues(counts: Record<string, number>): number {
-  return Object.values(counts).reduce((total, count) => total + count, 0)
-}
+  | { allowed: false; reason: string; removed: Array<{ type: string; ids: string[] }> }
 
 /**
  * Union-of-intents save-approval semantics (P0.10 §4/§7-D).
@@ -152,18 +107,7 @@ export function evaluateAuthoredSave(
   if (scopes.length === 0) {
     return { allowed: false, reason: 'No authored mutation intent — save refused (load/view-only).', removed: [] }
   }
-  const rejectedByScope: Array<Map<GuardCollectionKind, Set<string>>> = scopes.map(() => new Map())
-  const results = scopes.map((scope, scopeIndex) => {
-    const observeRejectedRemoval: GuardRejectedRemovalObserver = (type, id) => {
-      let rejected = rejectedByScope[scopeIndex].get(type)
-      if (!rejected) {
-        rejected = new Set()
-        rejectedByScope[scopeIndex].set(type, rejected)
-      }
-      rejected.add(id)
-    }
-    return guardCrossScopeDestruction(previous, candidate, scope, observeRejectedRemoval)
-  })
+  const results = scopes.map((s) => guardCrossScopeDestruction(previous, candidate, s))
   if (results.every((r) => r.allowed)) return { allowed: true }
 
   const flaggedPerScope = results.map((r) => {
@@ -184,42 +128,10 @@ export function evaluateAuthoredSave(
     if (common.length > 0) bad.push({ type: t, ids: common })
   }
   if (bad.length === 0) return { allowed: true }
-
-  const removedEntityKinds = countRemovedByKind(previous, candidate)
-  const uncoveredEntityKinds = zeroCounts(GUARD_COLLECTION_KINDS)
-  for (const type of GUARD_COLLECTION_KINDS) {
-    const remaining = new Set((candidate[type] ?? []).map((entity) => entity.id))
-    const rejectedByEveryScope = rejectedByScope.map((rejected) => rejected.get(type) ?? new Set<string>())
-    for (const entity of previous[type] ?? []) {
-      if (remaining.has(entity.id)) continue
-      if (rejectedByEveryScope.every((rejected) => rejected.has(entity.id))) uncoveredEntityKinds[type] += 1
-    }
-  }
-  const removedEntityCount = countValues(removedEntityKinds)
-  const uncoveredRemovalCount = countValues(uncoveredEntityKinds)
-  const coveredEntityKinds = zeroCounts(GUARD_COLLECTION_KINDS)
-  for (const type of GUARD_COLLECTION_KINDS) {
-    coveredEntityKinds[type] = removedEntityKinds[type] - uncoveredEntityKinds[type]
-  }
-  const pendingScopeKinds = zeroCounts(AUTHORED_SCOPE_KINDS)
-  for (const scope of scopes) pendingScopeKinds[scope.kind as AuthoredScopeKind] += 1
   const summary = bad.map((r) => `${r.type}[${r.ids.join(',')}]`).join(' ')
   return {
     allowed: false,
     reason: `Cross-scope destructive save blocked: no pending authored intent covers ${summary}`,
     removed: bad,
-    diagnostic: {
-      reason: 'removed-entity-outside-pending-scope',
-      removedEntityCount,
-      removedEntityKinds,
-      coveredRemovalCount: countValues(coveredEntityKinds),
-      coveredEntityKinds,
-      uncoveredRemovalCount,
-      uncoveredEntityKinds,
-      removedFromAcknowledgedBaselineCount: removedEntityCount,
-      pendingScopeCount: scopes.length,
-      pendingScopeKinds,
-      allRemovalsCovered: uncoveredRemovalCount === 0,
-    },
   }
 }

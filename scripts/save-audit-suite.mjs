@@ -93,9 +93,7 @@ function loadEnv() {
 const ENV = loadEnv()
 const SUPABASE_URL = ENV.SUPABASE_URL || ENV.NEXT_PUBLIC_SUPABASE_URL || 'https://oltfaepqcktrumfhadzb.supabase.co'
 const SERVICE_KEY = ENV.SUPABASE_SERVICE_ROLE_KEY
-if (!SERVICE_KEY) {
-  throw new Error('SUPABASE_SERVICE_ROLE_KEY is required in the local environment; no fallback secret is embedded in source.')
-}
+if (!SERVICE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY must be supplied through the environment')
 
 const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_KEY)
 

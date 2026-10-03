@@ -4,19 +4,8 @@ export type { CompileResult, CompiledArtifacts, CompilerAdapter } from './naviga
 export { PersistenceService } from './persistence-service'
 export type { PersistenceAdapter, PersistenceSyncState, PersistenceSyncStatus, PublishResult } from './persistence-service'
 
-export {
-  WorkflowStore,
-  __getWorkflowStatusTraceForTests,
-  __resetWorkflowStatusTraceForTests,
-} from './workflow-store'
-export type {
-  WorkflowSnapshot,
-  ValidationResult,
-  SaveRecord,
-  PublishRecord,
-  SyncStatus,
-  WorkflowStatusTraceEntry,
-} from './workflow-store'
+export { WorkflowStore } from './workflow-store'
+export type { WorkflowSnapshot, ValidationResult, SaveRecord, PublishRecord, SyncStatus } from './workflow-store'
 
 export { WorkflowService } from './workflow-service'
 

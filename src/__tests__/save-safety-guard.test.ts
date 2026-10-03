@@ -86,26 +86,4 @@ describe('P0.8 cross-scope destructive-save guard', () => {
       expect(r.reason).toContain('buildings[B]')
     }
   })
-
-  it('notifies the evaluator once for each rejected entity without changing the guard result', () => {
-    const manyDoors: GuardCollections = {
-      doors: Array.from({ length: 12 }, (_, index) => ({
-        id: `private-door-${index}`,
-        buildingId: 'B',
-        floor: 0,
-      })),
-    }
-    const observedKinds: Array<keyof GuardCollections> = []
-
-    const result = guardCrossScopeDestruction(
-      manyDoors,
-      { doors: [] },
-      A_F0_DOOR,
-      (kind) => observedKinds.push(kind),
-    )
-
-    expect(result.allowed).toBe(false)
-    expect(result.allowed ? [] : result.removed[0]?.ids).toHaveLength(10)
-    expect(observedKinds).toEqual(Array.from({ length: 12 }, () => 'doors'))
-  })
 })

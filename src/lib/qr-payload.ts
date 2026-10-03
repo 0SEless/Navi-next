@@ -1,11 +1,12 @@
 import type { NavNode } from '@/types/nav-types'
 import type { QrIndex, QrIndexEntry } from '@navi/core'
+import { getCanonicalCampusId } from './canonical-campus'
 
 /**
  * QR payload format for NAVI location codes.
  *
  * Format: `navi://<campusId>/navigate?node=<nodeId>`
- * - `<campusId>` — the campus this code belongs to (e.g. `asu-ibajay`)
+ * - `<campusId>` — the campus this code belongs to (for example, `map-map-1-repe`)
  * - `<nodeId>` — the routable GRAPH node id (never a component id — see
  *   ERRORS.md 2026-08-02)
  *
@@ -13,7 +14,7 @@ import type { QrIndex, QrIndexEntry } from '@navi/core'
  * `?node=<id>` (the QRScanner component's original format).
  */
 export const QR_PROTOCOL = 'navi://'
-export const QR_DEFAULT_CAMPUS = 'asu-ibajay'
+export const QR_DEFAULT_CAMPUS = getCanonicalCampusId()
 export const QR_ID_MAX_LENGTH = 128
 export const QR_PUBLIC_HOSTS = ['navi.app', 'www.navi.app'] as const
 

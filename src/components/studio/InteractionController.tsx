@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import maplibregl from 'maplibre-gl'
 import { asEntityId, genId, useEditor, findConnectivityCandidates, LAYER_IDS, SOURCE_IDS, SelectionOrigin } from '@navi/editor'
 import { useGraphStore } from '@/store/graph-store'
@@ -40,12 +40,8 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
   const selectedNodeRef = useRef(useStudioStore.getState().selectedNodeId)
   const selectedTraceRef = useRef<string | null>(null)
   const positionEditTargetRef = useRef(useStudioStore.getState().positionEditTarget)
-  const dragVertexRef = useRef<{ index: number; points: LatLng[]; source: 'trace' | 'draw'; startPoint: LatLng; moved: boolean } | null>(null)
-  const buildingDragRef = useRef<{ buildingId: string; originalFootprint: LatLng[]; startPoint: LatLng; moved: boolean } | null>(null)
-  const autosaveRef = useRef<{ setTransientInteractionActive?: (active: boolean) => void } | null>(
-    services.get('autosave') as { setTransientInteractionActive?: (active: boolean) => void } | null,
-  )
-  const transientInteractionActiveRef = useRef(false)
+  const dragVertexRef = useRef<{ index: number; points: LatLng[]; source: 'trace' | 'draw' } | null>(null)
+  const buildingDragRef = useRef<{ buildingId: string; originalFootprint: LatLng[]; startPoint: LatLng } | null>(null)
   const lastSelectedNodeRef = useRef<string | null>(null)
   const hoveredBldgRef = useRef<string | null>(null)
   const hoveredBldgSourceRef = useRef<string>(SOURCE_IDS.BUILDINGS)
@@ -61,33 +57,6 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
   const emptyMapClickRef = useRef(onEmptyMapClick)
   useEffect(() => { setRoomDragRef.current = onSetRoomDrag }, [onSetRoomDrag])
   useEffect(() => { emptyMapClickRef.current = onEmptyMapClick }, [onEmptyMapClick])
-
-  useEffect(() => {
-    autosaveRef.current = services.get('autosave') as { setTransientInteractionActive?: (active: boolean) => void } | null
-  }, [services])
-
-  const setTransientInteractionActive = useCallback((active: boolean) => {
-    if (transientInteractionActiveRef.current === active) return
-    transientInteractionActiveRef.current = active
-    autosaveRef.current?.setTransientInteractionActive?.(active)
-  }, [])
-
-  const releaseTransientInteraction = useCallback(() => {
-    setTransientInteractionActive(false)
-  }, [setTransientInteractionActive])
-
-  const cancelActiveGesture = useCallback(() => {
-    const cancelBuildingPreview = Boolean(buildingDragRef.current)
-    dragVertexRef.current = null
-    if (buildingDragRef.current) {
-      buildingDragRef.current = null
-      try { map.dragPan.enable() } catch {}
-    }
-    if (cancelBuildingPreview) {
-      try { useGraphStore.setState((s) => ({ renderVersion: s.renderVersion + 1 })) } catch {}
-    }
-    releaseTransientInteraction()
-  }, [map, releaseTransientInteraction])
 
   // ── Cursor + dragPan management ──
   useEffect(() => {
@@ -112,17 +81,12 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
       map.setFeatureState({ source: SOURCE_IDS.POIS, id: hoveredPoiRef.current }, { hover: false })
       hoveredPoiRef.current = null
     }
-    // A tool switch abandons any unfinished authored gesture. Release the
-    // autosave gate here even when the map never delivers a final mouse event.
-    if (dragVertexRef.current || buildingDragRef.current) {
-      cancelActiveGesture()
-    }
     if (tool === 'route' || tool === 'room' || tool === 'boundary' || tool === 'building' || tool === 'area' || tool === 'import-osm' || tool === 'set-boundary' || tool === 'place-panorama' || tool === 'poi' || tool === 'poi-circle' || tool === 'poi-rectangle' || tool === 'poi-polygon') {
       map.dragPan.disable()
     } else {
       map.dragPan.enable()
     }
-  }, [tool, map, cancelActiveGesture])
+  }, [tool, map])
 
   useEffect(() => {
     const unsubDrawing = drawingRef.current.subscribe(() => {
@@ -195,11 +159,8 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
     if (!map) return
 
     const handleClick = (e: maplibregl.MapMouseEvent) => {
-      if (dragVertexRef.current) { dragVertexRef.current = null; releaseTransientInteraction(); return }
-      if (buildingDragRef.current) {
-        cancelActiveGesture()
-        return
-      }
+      if (dragVertexRef.current) { dragVertexRef.current = null; return }
+      if (buildingDragRef.current) { buildingDragRef.current = null; map.dragPan.enable(); return }
       const curTool = toolRef.current
       const pos = { lat: e.lngLat.lat, lng: e.lngLat.lng }
 
@@ -210,8 +171,7 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
         if (drawingRef.current.pendingRoadConnection) return
         const nearIdx = findNearestVertex(e.point, map, points)
         if (nearIdx >= 0) {
-          // The mousedown handler owns vertex drags. A click without a move
-          // must remain a no-op and must not leave a stale armed drag behind.
+          dragVertexRef.current = { index: nearIdx, points: [...points], source: 'trace' }
           return
         }
         // Fix 1: 0.5 m intent detection. Nothing is snapped or mutated before
@@ -402,7 +362,6 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
               buildingId: targetId,
               originalFootprint: building.footprint.map(p => ({ ...p })),
               startPoint: { lat: e.lngLat.lat, lng: e.lngLat.lng },
-              moved: false,
             }
             map.dragPan.disable()
             return
@@ -434,13 +393,7 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
         const points = curTool === 'route' ? tracePointsRef.current : drawPointsRef.current
         const nearIdx = findNearestVertex(e.point, map, points)
         if (nearIdx >= 0) {
-          dragVertexRef.current = {
-            index: nearIdx,
-            points: [...points],
-            source: curTool === 'route' ? 'trace' : 'draw',
-            startPoint: { lat: e.lngLat.lat, lng: e.lngLat.lng },
-            moved: false,
-          }
+          dragVertexRef.current = { index: nearIdx, points: [...points], source: curTool === 'route' ? 'trace' : 'draw' }
         }
       }
     }
@@ -448,10 +401,6 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
     const handleMouseMove = (e: maplibregl.MapMouseEvent) => {
       const drag = dragVertexRef.current
       if (drag) {
-        if (!drag.moved && (e.lngLat.lat !== drag.startPoint.lat || e.lngLat.lng !== drag.startPoint.lng)) {
-          drag.moved = true
-          setTransientInteractionActive(true)
-        }
         drag.points[drag.index] = { lat: e.lngLat.lat, lng: e.lngLat.lng }
         const coords = drag.points.map((p) => [p.lng, p.lat])
         const drawFeatures: GeoJSON.Feature[] = []
@@ -472,31 +421,22 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
       if (buildingDrag) {
         const dLat = e.lngLat.lat - buildingDrag.startPoint.lat
         const dLng = e.lngLat.lng - buildingDrag.startPoint.lng
-        if (!buildingDrag.moved && (dLat !== 0 || dLng !== 0)) {
-          buildingDrag.moved = true
-          setTransientInteractionActive(true)
-        }
-        try {
-          const buildingSrc = map.getSource(SOURCE_IDS.BUILDINGS) as maplibregl.GeoJSONSource
-          if (buildingSrc) {
-            const features = graphRef.current.buildings.map((bb) => {
-              const footprint = bb.id === buildingDrag.buildingId
-                ? buildingDrag.originalFootprint.map(p => ({ lat: p.lat + dLat, lng: p.lng + dLng }))
-                : bb.footprint
-              return {
-                type: 'Feature' as const,
-                properties: { id: bb.id, name: bb.name, color: bb.color || '#1C6BEB', height: bb.height || 15 },
-                geometry: {
-                  type: 'Polygon' as const,
-                  coordinates: [footprint.map(p => [p.lng, p.lat]).concat([[footprint[0].lng, footprint[0].lat]])],
-                },
-              }
-            })
-            buildingSrc.setData({ type: 'FeatureCollection', features })
-          }
-        } catch (error) {
-          cancelActiveGesture()
-          throw error
+        const buildingSrc = map.getSource(SOURCE_IDS.BUILDINGS) as maplibregl.GeoJSONSource
+        if (buildingSrc) {
+          const features = graphRef.current.buildings.map((bb) => {
+            const footprint = bb.id === buildingDrag.buildingId
+              ? buildingDrag.originalFootprint.map(p => ({ lat: p.lat + dLat, lng: p.lng + dLng }))
+              : bb.footprint
+            return {
+              type: 'Feature' as const,
+              properties: { id: bb.id, name: bb.name, color: bb.color || '#1C6BEB', height: bb.height || 15 },
+              geometry: {
+                type: 'Polygon' as const,
+                coordinates: [footprint.map(p => [p.lng, p.lat]).concat([[footprint[0].lng, footprint[0].lat]])],
+              },
+            }
+          })
+          buildingSrc.setData({ type: 'FeatureCollection', features })
         }
         return
       }
@@ -533,40 +473,32 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
     const handleMouseUp = (e: maplibregl.MapMouseEvent) => {
       const drag = dragVertexRef.current
       if (drag) {
-        try {
-          setCurrentPoints(drag.points)
-        } finally {
-          dragVertexRef.current = null
-          releaseTransientInteraction()
-        }
+        setCurrentPoints(drag.points)
+        dragVertexRef.current = null
         return
       }
       const buildingDrag = buildingDragRef.current
       if (buildingDrag) {
-        try {
-          map.dragPan.enable()
-          const dLat = e.lngLat.lat - buildingDrag.startPoint.lat
-          const dLng = e.lngLat.lng - buildingDrag.startPoint.lng
-          if (dLat !== 0 || dLng !== 0) {
-            const movedFootprint = buildingDrag.originalFootprint.map(p => ({
-              lat: p.lat + dLat,
-              lng: p.lng + dLng,
-            }))
-            const centroid = {
-              lat: movedFootprint.reduce((s, p) => s + p.lat, 0) / movedFootprint.length,
-              lng: movedFootprint.reduce((s, p) => s + p.lng, 0) / movedFootprint.length,
-            }
-            useGraphStore.getState().updateBuilding(buildingDrag.buildingId, { footprint: movedFootprint, center: centroid })
-            void useGraphStore.getState().save().catch((error: unknown) => {
-              console.warn('Building move persistence failed:', error)
-            })
-            dispatcherRef.current?.execute({ id: 'entity.update', label: 'Move Building', payload: { entityId: buildingDrag.buildingId, changes: { footprint: { points: movedFootprint } } } })
+        map.dragPan.enable()
+        const dLat = e.lngLat.lat - buildingDrag.startPoint.lat
+        const dLng = e.lngLat.lng - buildingDrag.startPoint.lng
+        if (dLat !== 0 || dLng !== 0) {
+          const movedFootprint = buildingDrag.originalFootprint.map(p => ({
+            lat: p.lat + dLat,
+            lng: p.lng + dLng,
+          }))
+          const centroid = {
+            lat: movedFootprint.reduce((s, p) => s + p.lat, 0) / movedFootprint.length,
+            lng: movedFootprint.reduce((s, p) => s + p.lng, 0) / movedFootprint.length,
           }
-          useStudioStore.getState().setPositionEditTarget(null)
-        } finally {
-          buildingDragRef.current = null
-          releaseTransientInteraction()
+          useGraphStore.getState().updateBuilding(buildingDrag.buildingId, { footprint: movedFootprint, center: centroid })
+          void useGraphStore.getState().save().catch((error: unknown) => {
+            console.warn('Building move persistence failed:', error)
+          })
+          dispatcherRef.current?.execute({ id: 'entity.update', label: 'Move Building', payload: { entityId: buildingDrag.buildingId, changes: { footprint: { points: movedFootprint } } } })
         }
+        useStudioStore.getState().setPositionEditTarget(null)
+        buildingDragRef.current = null
         return
       }
       if (dragStart && toolRef.current === 'room') {
@@ -587,8 +519,10 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (buildingDragRef.current || dragVertexRef.current) {
-          cancelActiveGesture()
+        if (buildingDragRef.current) {
+          buildingDragRef.current = null
+          map.dragPan.enable()
+          useGraphStore.setState((s) => ({ renderVersion: s.renderVersion + 1 }))
           return
         }
         useStudioStore.getState().setPositionEditTarget(null)
@@ -647,12 +581,6 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
         }
         return
       }
-    }
-
-    const handlePointerCancel = () => {
-      dragStart = null
-      setRoomDragRef.current?.(null)
-      cancelActiveGesture()
     }
 
     const ENTITY_LAYERS = [LYR.NODES, LYR.NODES_CONNECTION, LAYER_IDS.ROAD_OUTLINE, LAYER_IDS.ROAD_FILL, LAYER_IDS.NAVIGATION_ONLY_ROAD, LYR.AREAS_FILL, LAYER_IDS.POI_ICON, LAYER_IDS.POI_FILL, LAYER_IDS.POI_EXTRUSION, LAYER_IDS.POI_OUTLINE]
@@ -719,13 +647,8 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
       map.on('mouseleave', l, handleEntityLeave)
     }
     window.addEventListener('keydown', handleKeyDown)
-    const canvas = map.getCanvas()
-    canvas.addEventListener?.('pointercancel', handlePointerCancel)
 
     return () => {
-      dragStart = null
-      setRoomDragRef.current?.(null)
-      cancelActiveGesture()
       try { if (hoveredBldgRef.current) map.setFeatureState({ source: hoveredBldgSourceRef.current, id: hoveredBldgRef.current }, { hover: false }) } catch {}
       hoveredBldgRef.current = null
       if (selectedBldgRef.current) {
@@ -746,9 +669,8 @@ export function InteractionController({ map, onSetRoomDrag, onEmptyMapClick, dra
         try { map.off('mouseleave', l, handleEntityLeave) } catch {}
       }
       window.removeEventListener('keydown', handleKeyDown)
-      canvas.removeEventListener?.('pointercancel', handlePointerCancel)
     }
-  }, [map, cancelActiveGesture, releaseTransientInteraction, setTransientInteractionActive])
+  }, [map])
 
   return (
     <>

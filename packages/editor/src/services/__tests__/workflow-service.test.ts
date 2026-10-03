@@ -232,32 +232,6 @@ describe('WorkflowService', () => {
       expect(snapshot.saveError).toBeNull()
     })
 
-    it('repairs the saved baseline when a stale reload marker converges without a document commit', () => {
-      // A stale marker can briefly surface the graph store's pending/idle state
-      // during reload. Canonical L == S convergence must settle the workflow
-      // back to saved without inventing a document revision.
-      emitPersistenceSyncState('idle')
-      expect(workflowStore.getSnapshot().saveState).toBe('dirty')
-
-      emitPersistenceSyncState('synced')
-      const snapshot = workflowStore.getSnapshot()
-      expect(snapshot.saveState).toBe('saved')
-      expect(snapshot.saveError).toBeNull()
-      expect(snapshot.lastSaveVersion).toBe(0)
-    })
-
-    it('repairs a reused dirty baseline after checking settles to synced', () => {
-      service.mutate()
-      expect(workflowStore.getSnapshot().saveState).toBe('dirty')
-
-      emitPersistenceSyncState('checking')
-      expect(workflowStore.getSnapshot().saveState).toBe('dirty')
-
-      emitPersistenceSyncState('synced')
-      expect(workflowStore.getSnapshot().saveState).toBe('saved')
-      expect(workflowStore.getSnapshot().saveError).toBeNull()
-    })
-
     it('a committed revision immediately leaves the saved state (no debounce gap)', () => {
       expect(workflowStore.getSnapshot().saveState).toBe('saved')
 

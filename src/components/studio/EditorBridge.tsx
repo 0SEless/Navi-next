@@ -9,10 +9,8 @@ import {
   findEntityById,
   NavigationCompiler,
   createEditorContext,
-  createDocument,
   GraphAdapter,
 } from '@navi/editor'
-import type { CampusDocument } from '@navi/core'
 import type { EntitySelector, PersistenceAdapter, EditorContext, DocumentEventBus } from '@navi/editor'
 import type { PersistenceSyncState } from '@navi/editor'
 import { useGraphStore } from '@/store/graph-store'
@@ -20,132 +18,6 @@ import { useStudioStore } from '@/store/studio-store'
 import { useCompiledGraphStore } from '@/store/compiled-graph-store'
 import { createCompilerAdapter } from '@/services/compiler-adapter'
 import { persistStudioGraph } from './studio-persistence'
-import type { Graph } from '@/engine/graph'
-
-type AuthoredIntentKind = 'door' | 'route' | 'poi' | 'building' | 'floor' | 'outdoor'
-
-type DocumentEntityScope = {
-  path: string
-  buildingId: string | null
-  floor: number | null
-}
-
-/** Resolve the owning authored scope for an entity after a committed change. */
-function findDocumentEntityScope(document: CampusDocument, entityId: string): DocumentEntityScope | null {
-  for (const building of document.buildings) {
-    if (building.id === entityId) return { path: 'building', buildingId: building.id, floor: null }
-    for (const floor of building.floors) {
-      if (floor.id === entityId) return { path: 'floor', buildingId: building.id, floor: floor.level }
-      const collections: Array<[string, unknown]> = [
-        ['room', floor.rooms], ['hallway', floor.hallways], ['staircase', floor.staircases],
-        ['elevator', floor.elevators], ['entrance', floor.entrances], ['poi', floor.pois],
-        ['door', floor.doors], ['window', floor.windows], ['opening', floor.openings],
-        ['route-node', floor.routeNetwork?.nodes], ['route-edge', floor.routeNetwork?.edges],
-        ['roomAttributes', floor.roomAttributes], ['component', floor.parametricComponents],
-      ]
-      for (const [path, items] of collections) {
-        if (Array.isArray(items) && items.some((item) => (item as { id?: unknown })?.id === entityId)) {
-          return { path, buildingId: building.id, floor: floor.level }
-        }
-      }
-    }
-    const buildingCollections: Array<[string, unknown]> = [
-      ['verticalConnector', building.verticalConnectors],
-      ['staircase', building.staircases], ['elevator', building.elevators],
-    ]
-    for (const [path, items] of buildingCollections) {
-      if (Array.isArray(items) && items.some((item) => (item as { id?: unknown })?.id === entityId)) {
-        return { path, buildingId: building.id, floor: null }
-      }
-    }
-  }
-
-  const topLevel: Array<[string, unknown]> = [
-    ['road', document.roads], ['panorama', document.panoramas],
-    ['qr', document.qrCheckpoints], ['area', document.areas], ['poi', document.pois],
-  ]
-  for (const [path, items] of topLevel) {
-    if (!Array.isArray(items)) continue
-    const entity = items.find((item) => (item as { id?: unknown })?.id === entityId) as {
-      buildingId?: unknown
-      floor?: unknown
-    } | undefined
-    if (entity) {
-      return {
-        path,
-        buildingId: typeof entity.buildingId === 'string' ? entity.buildingId : null,
-        floor: typeof entity.floor === 'number' ? entity.floor : null,
-      }
-    }
-  }
-  return null
-}
-
-function intentForDocumentEntity(
-  document: CampusDocument,
-  entityId: string,
-  entityType: string,
-): { kind: AuthoredIntentKind; buildingId: string | null; floor: number | null } {
-  const scope = findDocumentEntityScope(document, entityId)
-  const path = scope?.path ?? entityType
-  const buildingId = scope?.buildingId ?? null
-  const floor = scope?.floor ?? null
-  if (path === 'building') return { kind: 'building', buildingId: entityId, floor: null }
-  if (path === 'door') return { kind: 'door', buildingId, floor }
-  if (path === 'poi') return { kind: 'poi', buildingId, floor }
-  if (path === 'road' || path === 'route-node' || path === 'route-edge') {
-    return { kind: buildingId ? 'route' : 'outdoor', buildingId, floor }
-  }
-  if (buildingId) return { kind: 'floor', buildingId, floor }
-  return { kind: 'outdoor', buildingId: null, floor: null }
-}
-
-/**
- * Reconcile a newly authoritative graph into the long-lived editor document.
- *
- * GraphAdapter.sync() is intentionally document → legacy graph. Recovery and
- * server adoption replace the graph in the opposite direction, so leaving the
- * old CampusDocument mounted would let visibility/beforeunload project stale
- * data back into localStorage on the next reload. This boundary updates the
- * existing document identity without emitting an authored revision.
- */
-export function reconcileAuthoritativeDocument(context: EditorContext, graph: Graph): void {
-  const authoredDocument = useGraphStore.getState().authoredDocument
-  const replacement = authoredDocument && authoredDocument.metadata.campusId === context.document.metadata.campusId
-    ? structuredClone(authoredDocument)
-    : createDocument(graph, context.transformer)
-  const documentStore = context.services.get('documentStore')
-  if (documentStore && typeof documentStore.replaceAuthoritative === 'function') {
-    documentStore.replaceAuthoritative(replacement)
-  } else {
-    for (const key of Object.keys(context.document)) {
-      Reflect.deleteProperty(context.document, key)
-    }
-    Object.assign(context.document, structuredClone(replacement))
-  }
-
-  context.services.get('history')?.clear()
-  context.services.get('selection')?.clear(SelectionOrigin.Programmatic)
-}
-
-/**
- * Project the document into the legacy graph only after an authored document
- * version has advanced. Authoritative hydration replaces the document in
- * place without a revision, so running the lossy document→graph adapter from
- * visibility/beforeunload would rewrite a clean server snapshot before reload.
- */
-function projectDocumentIfAuthored(
-  context: EditorContext,
-  lastProjectedVersionRef: { current: number | null },
-): void {
-  const documentStore = context.services.get('documentStore') as { version?: number } | undefined
-  const version = typeof documentStore?.version === 'number' ? documentStore.version : null
-  if (version !== null && lastProjectedVersionRef.current === version) return
-
-  const ga = new GraphAdapter(useGraphStore.getState().graph, context.transformer)
-  ga.sync(context.document)
-  if (version !== null) lastProjectedVersionRef.current = version
-}
 
 /**
  * ── Selection Ownership Invariant ─────────────────────────────────
@@ -182,7 +54,6 @@ function projectDocumentIfAuthored(
 
 export function EditorBridge({ children }: { children: ReactNode }) {
   const contextRef = useRef<EditorContext | null>(null)
-  const lastProjectedDocumentVersionRef = useRef<number | null>(null)
 
   // GraphAdapter is a projection step. Capture its document only when the
   // campus already has a new-format authored snapshot or a real editor change
@@ -192,12 +63,12 @@ export function EditorBridge({ children }: { children: ReactNode }) {
     const ctx = contextRef.current
     if (!ctx) return
     const state = useGraphStore.getState()
+    const activeBuildingId = useStudioStore.getState().activeBuildingId
+    const scope = activeBuildingId ? { kind: 'building', buildingId: activeBuildingId, floor: null } : undefined
     const ga = new GraphAdapter(state.graph, ctx.transformer)
-    ga.sync(ctx.document)
+    ga.sync(ctx.document, scope)
     const nextState = useGraphStore.getState()
-    if (nextState.authoredDocument !== null || ctx.document.version > 0) {
-      nextState.setAuthoredDocument(ctx.document)
-    }
+    nextState.setAuthoredDocument(ctx.document)
   }
 
   const persistenceAdapter: PersistenceAdapter = {
@@ -207,6 +78,20 @@ export function EditorBridge({ children }: { children: ReactNode }) {
       },
       saveGraph: async () => {
         try {
+          const activeBuildingId = useStudioStore.getState().activeBuildingId
+          // Fallback attribution is gated on a real editor change: a document
+          // version advance proves an authored mutation happened even when its
+          // intent record was missed (e.g. floor.create from the Manage Floors
+          // dialog). Hydration/view-only sessions keep version 0, so the P0.11
+          // unattributed-mutation guard still fails closed for them.
+          const hasRealDocumentEdit = (contextRef.current?.document.version ?? 0) > 0
+          if (useGraphStore.getState().pendingAuthoredMutations.length === 0 && hasRealDocumentEdit) {
+            if (activeBuildingId) {
+              useGraphStore.getState().recordAuthoredMutation('building', activeBuildingId, null)
+            } else {
+              useGraphStore.getState().recordAuthoredMutation('outdoor', null, null)
+            }
+          }
           await useGraphStore.getState().save({ trigger: 'autosave' })
         } catch (error: unknown) {
           console.warn('EditorBridge adapter save failed:', error)
@@ -218,7 +103,20 @@ export function EditorBridge({ children }: { children: ReactNode }) {
         useGraphStore.setState((s) => ({ renderVersion: s.renderVersion + 1 }))
       },
     }),
-    syncToSupabase: () => useGraphStore.getState().syncToSupabase({ trigger: 'autosave' }),
+    syncToSupabase: () => {
+      const activeBuildingId = useStudioStore.getState().activeBuildingId
+      // Same gate as saveGraph: only a real document version advance may
+      // fabricate fallback attribution; version-0 sessions stay fail-closed.
+      const hasRealDocumentEdit = (contextRef.current?.document.version ?? 0) > 0
+      if (useGraphStore.getState().pendingAuthoredMutations.length === 0 && hasRealDocumentEdit) {
+        if (activeBuildingId) {
+          useGraphStore.getState().recordAuthoredMutation('building', activeBuildingId, null)
+        } else {
+          useGraphStore.getState().recordAuthoredMutation('outdoor', null, null)
+        }
+      }
+      return useGraphStore.getState().syncToSupabase({ trigger: 'autosave' })
+    },
     getSyncState: (): PersistenceSyncState => {
       const state = useGraphStore.getState()
       return { status: state.syncStatus, error: state.syncError }
@@ -265,16 +163,11 @@ export function EditorBridge({ children }: { children: ReactNode }) {
   }
   const navCompiler = new NavigationCompiler(createCompilerAdapter())
   const [context] = useState(() => {
-    const state = useGraphStore.getState()
-    const authoredDocument = state.authoredDocument
-    const activeCampusId = state.currentMapId ?? state.graph.campusId
     const ctx = createEditorContext(
-      state.graph,
+      useGraphStore.getState().graph,
       persistenceAdapter,
       navCompiler,
-      authoredDocument && authoredDocument.metadata.campusId === activeCampusId
-        ? authoredDocument
-        : undefined,
+      useGraphStore.getState().authoredDocument ?? undefined,
     )
     return ctx
   })
@@ -288,41 +181,13 @@ export function EditorBridge({ children }: { children: ReactNode }) {
   useEffect(() => {
     const graph = useGraphStore.getState().graph
     if (typeof graph?.setBuildings !== 'function') return
-    const syncState = useGraphStore.getState().syncStatus
-    // A `checking`/`synced` graph came from an authoritative cache/server
-    // hydration. Rebuilding it through the document→legacy adapter here can
-    // apply lossy migrations before freshness settles and manufacture a
-    // store-ahead fingerprint on an otherwise clean reload. Local-ahead and
-    // legacy drafts still use the existing rebuild path.
-    if (syncState !== 'checking' && syncState !== 'synced') {
-      new GraphAdapter(graph, context.transformer).sync(context.document)
-    }
-    const documentStore = context.services.get('documentStore') as { version?: number } | undefined
-    lastProjectedDocumentVersionRef.current = typeof documentStore?.version === 'number' ? documentStore.version : null
-    if (useGraphStore.getState().authoredDocument !== null) {
-      useGraphStore.getState().setAuthoredDocument(context.document)
-    }
+    new GraphAdapter(graph, context.transformer).sync(context.document)
+    useGraphStore.getState().setAuthoredDocument(context.document)
     useGraphStore.setState((state) => ({ renderVersion: state.renderVersion + 1 }))
     // P0.13 CAMPUS_READY_FOR_AUTHORED_SAVE: the initial GraphAdapter/EditorBridge
     // reconciliation has completed — the campus is now READY_CLEAN and authored
     // persistence may proceed (P0.14: shared lifecycle action).
     useGraphStore.getState().completeCampusHydration()
-  }, [context])
-
-  // Recovery/server adoption replaces the graph object while this bridge stays
-  // mounted. Keep the editor's long-lived CampusDocument aligned before any
-  // visibility or unload persistence can project it back into the graph.
-  useEffect(() => {
-    let observedGraph = useGraphStore.getState().graph
-    const unsubscribe = useGraphStore.subscribe((state) => {
-      if (state.graph === observedGraph) return
-      observedGraph = state.graph
-      if (state.currentMapId !== context.document.metadata.campusId) return
-      reconcileAuthoritativeDocument(context, state.graph)
-      const documentStore = context.services.get('documentStore') as { version?: number } | undefined
-      lastProjectedDocumentVersionRef.current = typeof documentStore?.version === 'number' ? documentStore.version : null
-    })
-    return unsubscribe
   }, [context])
 
   // The editor document is authoritative, but the Studio map still has a
@@ -339,45 +204,31 @@ export function EditorBridge({ children }: { children: ReactNode }) {
       clear: (origin?: SelectionOrigin) => void
     } | undefined
 
-    // Document commands bypass the legacy Graph mutators, so they do not
-    // reach graph-store's authored-intent boundary on their own. Record the
-    // committed authored scope for every document change; without this event
-    // bridge, normal autosave sees no intent and correctly refuses to POST.
-    const unsubscribeBuildingDelete = eventBus.on('entity.deleted', (payload: {
-      entityId?: unknown
-      entityType?: unknown
-    }) => {
-      if (payload?.entityType !== 'building' || typeof payload.entityId !== 'string') return
-      useGraphStore.getState().recordAuthoredMutation('building', payload.entityId, null)
-    })
+    const unsubscribe = eventBus.on('document.changed', (evt?: { entityType?: string; entityId?: string }) => {
+      const activeBuildingId = useStudioStore.getState().activeBuildingId
+      const entityType = evt?.entityType
 
-    const unsubscribe = eventBus.on('document.changed', (payload: {
-      entityId?: unknown
-      entityType?: unknown
-    }) => {
-      if (typeof payload?.entityId === 'string') {
-        const intent = intentForDocumentEntity(
-          context.document,
-          payload.entityId,
-          typeof payload.entityType === 'string' ? payload.entityType : 'entity',
-        )
-        useGraphStore.getState().recordAuthoredMutation(intent.kind, intent.buildingId, intent.floor)
+      // Record authored mutation so P0.11 save guard attributes the change and permits autosave
+      if (entityType === 'floor' || entityType === 'building') {
+        useGraphStore.getState().recordAuthoredMutation('building', activeBuildingId ?? evt?.entityId ?? null, null)
+      } else if (entityType === 'road') {
+        useGraphStore.getState().recordAuthoredMutation('outdoor', null, null)
+      } else if (activeBuildingId) {
+        useGraphStore.getState().recordAuthoredMutation('building', activeBuildingId, null)
+      } else {
+        useGraphStore.getState().recordAuthoredMutation('outdoor', null, null)
       }
+
       const graph = useGraphStore.getState().graph
-      new GraphAdapter(graph, context.transformer).sync(context.document)
-      const documentStore = context.services.get('documentStore') as { version?: number } | undefined
-      lastProjectedDocumentVersionRef.current = typeof documentStore?.version === 'number' ? documentStore.version : null
+      const scope = activeBuildingId ? { kind: 'building', buildingId: activeBuildingId, floor: null } : undefined
+      new GraphAdapter(graph, context.transformer).sync(context.document, scope)
       useGraphStore.getState().setAuthoredDocument(context.document)
       useGraphStore.setState((state) => ({ renderVersion: state.renderVersion + 1 }))
-      // Phase 3B: every committed document change is made durable locally right
-      // away — no network, no marker advance. Server autosave remains separate.
-      useGraphStore.getState().persistLocalDraft()
 
       // Undo can remove the currently selected Building through an inverse
       // command without going through the normal canvas selection path. Clear
       // that stale selection so the inspector does not show "Entity not
       // found" for an entity that was just removed.
-      const activeBuildingId = useStudioStore.getState().activeBuildingId
       if (activeBuildingId && !context.document.buildings.some((building) => building.id === activeBuildingId)) {
         useStudioStore.getState().setActiveBuilding(null)
       }
@@ -391,26 +242,34 @@ export function EditorBridge({ children }: { children: ReactNode }) {
       }
     })
 
-    return () => {
-      unsubscribe()
-      unsubscribeBuildingDelete()
-    }
+    return () => unsubscribe()
   }, [context])
 
-  // Phase 3B — unload/visibility now ensure ONLY the committed LOCAL draft is
-  // durable. No normal server synchronization is started from teardown paths.
+  // Save on tab close / navigation away — fires even if autosave debounce hasn't
+  // elapsed. Uses synchronous localStorage write (via graphStore.save()) so data
+  // survives browser close. The async Supabase sync runs in the background.
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
-        const ctx = contextRef.current
-        if (ctx) projectDocumentIfAuthored(ctx, lastProjectedDocumentVersionRef)
-        useGraphStore.getState().persistLocalDraft()
+        syncDocumentAndCapture()
+        const activeBuildingId = useStudioStore.getState().activeBuildingId
+        if (useGraphStore.getState().pendingAuthoredMutations.length === 0 && context.document.version > 0) {
+          useGraphStore.getState().recordAuthoredMutation(activeBuildingId ? 'building' : 'outdoor', activeBuildingId, null)
+        }
+        void useGraphStore.getState().save().catch((error: unknown) => {
+          console.warn('EditorBridge visibility persistence failed:', error)
+        })
       }
     }
     const handleBeforeUnload = () => {
-      const ctx = contextRef.current
-      if (ctx) projectDocumentIfAuthored(ctx, lastProjectedDocumentVersionRef)
-      useGraphStore.getState().persistLocalDraft()
+      syncDocumentAndCapture()
+      const activeBuildingId = useStudioStore.getState().activeBuildingId
+      if (useGraphStore.getState().pendingAuthoredMutations.length === 0 && context.document.version > 0) {
+        useGraphStore.getState().recordAuthoredMutation(activeBuildingId ? 'building' : 'outdoor', activeBuildingId, null)
+      }
+      void useGraphStore.getState().save().catch((error: unknown) => {
+        console.warn('EditorBridge unload persistence failed:', error)
+      })
     }
     document.addEventListener('visibilitychange', handleVisibility)
     window.addEventListener('beforeunload', handleBeforeUnload)
@@ -418,7 +277,7 @@ export function EditorBridge({ children }: { children: ReactNode }) {
       document.removeEventListener('visibilitychange', handleVisibility)
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
-  }, [])
+  }, [context])
 
   // Wire SelectionBridge once per mount: keep the legacy studio store and the
   // new SelectionManager in sync (selection only, loop-guarded).

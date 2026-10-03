@@ -39,31 +39,38 @@ describe('public-store POI search reveal (transient)', () => {
   it('reveals matching POI ids while a search query is active', () => {
     const results = usePublicStore.getState().search('guard')
     expect(results.map((entry) => entry.id)).toEqual(['poi-hidden'])
+    expect(usePublicStore.getState().revealedPoiIds).toEqual([])
+    usePublicStore.getState().setRevealedPoiIds(results.map((entry) => entry.sourceId ?? entry.id))
     expect(usePublicStore.getState().revealedPoiIds).toEqual(['poi-hidden'])
   })
 
   it('keeps the reveal limited to the matching hidden POI', () => {
-    usePublicStore.getState().search('study')
+    const results = usePublicStore.getState().search('study')
+    usePublicStore.getState().setRevealedPoiIds(results.map((entry) => entry.sourceId ?? entry.id))
     expect(usePublicStore.getState().revealedPoiIds).toEqual(['poi-visible'])
   })
 
   it('clears the reveal when the query is cleared', () => {
-    usePublicStore.getState().search('guard')
+    const matching = usePublicStore.getState().search('guard')
+    usePublicStore.getState().setRevealedPoiIds(matching.map((entry) => entry.sourceId ?? entry.id))
     expect(usePublicStore.getState().revealedPoiIds).toHaveLength(1)
 
-    usePublicStore.getState().search('')
+    const cleared = usePublicStore.getState().search('')
+    usePublicStore.getState().setRevealedPoiIds(cleared.map((entry) => entry.sourceId ?? entry.id))
     expect(usePublicStore.getState().revealedPoiIds).toEqual([])
   })
 
   it('clears the reveal through the explicit clear action', () => {
-    usePublicStore.getState().search('guard')
+    const matching = usePublicStore.getState().search('guard')
+    usePublicStore.getState().setRevealedPoiIds(matching.map((entry) => entry.sourceId ?? entry.id))
     usePublicStore.getState().clearRevealedPoiIds()
     expect(usePublicStore.getState().revealedPoiIds).toEqual([])
   })
 
   it('never persists the temporary reveal', () => {
     const campusBefore = usePublicStore.getState().campus
-    usePublicStore.getState().search('guard')
+    const matching = usePublicStore.getState().search('guard')
+    usePublicStore.getState().setRevealedPoiIds(matching.map((entry) => entry.sourceId ?? entry.id))
     expect(usePublicStore.getState().campus).toBe(campusBefore)
     const persisted = Object.keys(localStorage)
       .map((key) => localStorage.getItem(key) ?? '')

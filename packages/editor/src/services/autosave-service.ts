@@ -93,13 +93,6 @@ export class AutosaveService extends BaseEditorService {
   private maxIntervalTimer: ReturnType<typeof setInterval> | null = null
   private onRevisionCommitted!: () => void
   private queue: SaveQueue
-  /**
-   * Phase 3C — transient authored interaction gate. TRUE only while an authored
-   * gesture is genuinely incomplete (road/area being drawn, drag in progress).
-   * Tool selection, hover, selection, and idle-with-tool-selected are NOT
-   * transient interactions.
-   */
-  private transientInteractionActive = false
 
   constructor(options?: AutosaveOptions) {
     super()
@@ -140,23 +133,7 @@ export class AutosaveService extends BaseEditorService {
     this.debounceTimer = setTimeout(() => this.tryAutosave(), this.debounceMs)
   }
 
-  /**
-   * Phase 3C — set by the editing lifecycle while an authored gesture is
-   * incomplete. While TRUE, neither the 5s debounce nor the 30s safety interval
-   * may start a server save; the next committed revision reschedules naturally.
-   */
-  setTransientInteractionActive(active: boolean): void {
-    this.transientInteractionActive = active
-  }
-
-  isTransientInteractionActive(): boolean {
-    return this.transientInteractionActive
-  }
-
   private tryAutosave(): void {
-    // Unified eligibility (Phase 3C): the 5s debounce and the 30s safety
-    // interval share this exact gate.
-    if (this.transientInteractionActive) return
     if (!this.workflow.canAutosave()) return
 
     const currentVersion = this.documentStore.version

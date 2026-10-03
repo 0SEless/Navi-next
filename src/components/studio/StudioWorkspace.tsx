@@ -273,7 +273,7 @@ export function StudioWorkspace({ center }: StudioWorkspaceProps) {
     <div data-editor-ready="true" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '6px 14px', minHeight: 32, boxSizing: 'border-box',
+        padding: '0 14px', height: 32,
         background: 'var(--navi-card)', borderBottom: '1px solid var(--navi-border)',
         flexShrink: 0,
       }}>

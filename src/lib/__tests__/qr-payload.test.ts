@@ -3,6 +3,7 @@ import {
   encodeQrPayload,
   isForeignCampus,
   parseQrPayload,
+  QR_DEFAULT_CAMPUS,
   resolveQrCheckpoint,
   resolveQrPayload,
 } from '../qr-payload'
@@ -43,7 +44,7 @@ describe('parseQrPayload', () => {
 
   it('parses legacy ?node= URLs (original QRScanner format)', () => {
     expect(parseQrPayload('https://navi.app/?node=node-42&x=1')).toEqual({
-      campusId: 'asu-ibajay',
+      campusId: QR_DEFAULT_CAMPUS,
       nodeId: 'node-42',
     })
   })
@@ -61,7 +62,7 @@ describe('parseQrPayload', () => {
 
   it('URL-decodes node ids with spaces and slashes (?node=room%20a%2Fb)', () => {
     expect(parseQrPayload('https://navi.app/?node=room%20a%2Fb')).toEqual({
-      campusId: 'asu-ibajay',
+      campusId: QR_DEFAULT_CAMPUS,
       nodeId: 'room a/b',
     })
   })
@@ -75,7 +76,7 @@ describe('parseQrPayload', () => {
 
   it('parses bare node ids', () => {
     expect(parseQrPayload('node-7')).toEqual({
-      campusId: 'asu-ibajay',
+      campusId: QR_DEFAULT_CAMPUS,
       nodeId: 'node-7',
     })
   })

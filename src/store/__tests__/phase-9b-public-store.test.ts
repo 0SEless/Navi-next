@@ -12,6 +12,16 @@ function jsonResponse(body: unknown, status = 200) {
   )
 }
 
+function testPoi(revision: string) {
+  return {
+    id: revision + '-poi',
+    label: 'POI ' + revision,
+    category: 'amenity',
+    position: { lat: 14.0005, lng: 121.0005 },
+    properties: {},
+  }
+}
+
 function bundle(revision: string, campusId = 'phase9b-campus'): CampusBundle {
   const node1 = revision + '-node-1'
   const node2 = revision + '-node-2'
@@ -33,7 +43,7 @@ function bundle(revision: string, campusId = 'phase9b-campus'): CampusBundle {
     }],
     components: [{ id: revision + '-room', type: 'room' }],
     doors: [],
-    poi: [{ id: revision + '-poi' }],
+    poi: [testPoi(revision)],
     boundingBox: { minLat: 14, maxLat: 14.001, minLng: 121, maxLng: 121.001 },
   }
 }
@@ -76,7 +86,7 @@ function networkPayload(
       searchIndex: {
         entries: [{ id: revision + '-search', label: 'Search ' + revision, type: 'room', nodeId: node1 }],
       },
-      poiIndex: { points: [{ id: revision + '-poi' }] },
+      poiIndex: { points: [testPoi(revision)] },
       floorGeometry: { schemaVersion: 1, campusId, buildings: [{ id: revision + '-building' }] },
       panoramaIndex: { version: revision, entries: [{ id: revision + '-pano' }] },
       qrIndex: { schemaVersion: 1, formatVersion: 1, campusId, checkpoints: [{ id: revision + '-qr' }] },
@@ -190,9 +200,12 @@ describe('usePublicStore — Phase 9B preservation and atomicity', () => {
 
   it('keeps the stable bundle object on a same-revision refresh', async () => {
     const cache = createMemoryCampusCacheRepository()
-    await cache.put(cachedCampus('1'))
-    const store = createPublicStore({ cache })
     stubFetch(() => jsonResponse(networkPayload('1')))
+    // Seed the complete current projection, including published artifacts.
+    // Older lossy records must refresh even when their revision matches.
+    const firstStore = createPublicStore({ cache })
+    await firstStore.getState().fetchCampusData('phase9b-campus')
+    const store = createPublicStore({ cache })
 
     await store.getState().fetchCampusData('phase9b-campus')
     const stableBundle = store.getState().campus
@@ -224,7 +237,7 @@ describe('usePublicStore — Phase 9B preservation and atomicity', () => {
     expect(state.campus?.buildings[0].id).toBe('2-building')
     expect(state.campus?.searchEntries[0].id).toBe('2-search')
     expect(state.campus?.components?.[0].id).toBe('2-room')
-    expect(state.campus?.poi[0]).toEqual({ id: '2-poi' })
+    expect(state.campus?.poi[0]).toMatchObject(testPoi('2'))
     expect(state.campus?.floorGeometry?.campusId).toBe('campus-b')
     expect(state.campus?.panoramaIndex?.version).toBe('2')
     expect(state.campus?.qrIndex?.campusId).toBe('campus-b')

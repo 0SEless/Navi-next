@@ -1,4 +1,4 @@
-import type { FloorGeometryArtifact, OutdoorPointOfInterest, PanoramaIndex, PlanAlignment, QrIndex, RoadDisplayMode, RoadEdgeRouting, RoadRouting, SeparatedCrossing } from '@navi/core'
+import type { FloorGeometryArtifact, OutdoorPointOfInterest, PanoramaIndex, PlanAlignment, PointOfInterestAppearance, PointOfInterestVisibility, QrIndex, RoadDisplayMode, RoadEdgeRouting, RoadRouting, RoadSurface, RoadType, SeparatedCrossing, WorldPOIGeometry, WorldPolyline } from '@navi/core'
 
 export interface LatLng {
   lat: number;
@@ -133,7 +133,7 @@ export interface PathResult {
 export interface SearchEntry {
   id: string;
   label: string;
-  type: 'building' | 'room' | 'entrance' | 'facility' | 'poi';
+  type: 'building' | 'room' | 'entrance' | 'facility' | 'poi' | 'node';
   nodeId?: string;
   position?: LatLng;
   tags?: string[];
@@ -143,6 +143,30 @@ export interface SearchEntry {
   floorId?: string;
   source?: 'authored' | 'graph-derived';
   sourceId?: string;
+}
+
+/** Public-store POI shape shared by published artifacts and snapshot records. */
+export interface CampusPOI {
+  id: string;
+  label: string;
+  name?: string;
+  category: string;
+  position: LatLng;
+  buildingId?: string;
+  floor?: number;
+  nodeId?: string;
+  properties: Record<string, unknown>;
+  source?: 'authored' | 'graph-derived';
+  sourceId?: string;
+  floorId?: string;
+  geometry?: WorldPOIGeometry;
+  appearance?: PointOfInterestAppearance;
+  scope?: 'outdoor';
+  visibility?: PointOfInterestVisibility;
+  approach?: { mode: 'preferred'; position: LatLng };
+  metadata?: Record<string, unknown>;
+  navigation?: Record<string, unknown>;
+  showOnMap?: boolean;
 }
 
 export interface CampusBundle {
@@ -157,7 +181,10 @@ export interface CampusBundle {
   components?: Component[];
   /** Indoor doors — authored via Room.roomDoors, serialized for the rendering pipeline. */
   doors?: DoorData[];
-  poi: unknown[];
+  /** Published and snapshot POIs normalized to a shared public-map runtime shape. */
+  poi: CampusPOI[];
+  /** Authored campus traces. Routing graph edges remain separate. */
+  traces?: TracePath[];
   boundingBox: {
     minLat: number;
     maxLat: number;
@@ -272,7 +299,14 @@ export interface TracePath {
   campusId?: string;
   floor: number;
   points: LatLng[];
+  /** Two existing MapLibre display classes; canonical categories live in roadType. */
   type: 'arterial' | 'connector';
+  /** Original canonical Road category when parsed from a published Road artifact. */
+  roadType?: RoadType;
+  surface?: RoadSurface;
+  connectorEntranceId?: string;
+  /** Original canonical geometry container; points is the normalized runtime view. */
+  polyline?: WorldPolyline;
   /** Optional for legacy snapshots; missing is equivalent to `visible`. */
   displayMode?: RoadDisplayMode;
   color?: string;

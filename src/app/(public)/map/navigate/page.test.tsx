@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import type { CampusBundle, NavNode } from '@/types/nav-types'
+import type { CampusBundle, CampusPOI, NavNode } from '@/types/nav-types'
 import type { NavRoute, RouteProgress } from '@/types/route-types'
 import type { QrNavigateDeepLinkState } from '@/hooks/useQrNavigateDeepLink'
 import { usePublicStore } from '@/store/public-store'
@@ -186,6 +186,65 @@ const campus: CampusBundle = {
   boundingBox: null,
 }
 
+const searchablePoiId = 'poi-hidden-searchable'
+const searchablePoi: CampusPOI = {
+  id: searchablePoiId,
+  label: 'Quiet Courtyard',
+  category: 'landmark',
+  scope: 'outdoor',
+  position: { lat: 11.823, lng: 122.169 },
+  properties: {},
+  visibility: { showOnMap: false, searchable: true },
+}
+const campusWithSearchablePoi: CampusBundle = {
+  ...campus,
+  poi: [searchablePoi],
+  searchEntries: [
+    ...campus.searchEntries,
+    {
+      id: searchablePoiId,
+      label: searchablePoi.label,
+      type: 'poi',
+      source: 'authored',
+      sourceId: searchablePoiId,
+      category: searchablePoi.category,
+      position: searchablePoi.position,
+    },
+  ],
+}
+
+const unlinkedBuilding = {
+  id: 'building-north-studio',
+  name: 'North Studio',
+  campusId: 'campus-1',
+  floors: [0],
+  footprint: [],
+  baseElevation: 0,
+  height: 8,
+}
+const campusWithUnlinkedBuilding: CampusBundle = {
+  ...campus,
+  buildings: [...campus.buildings, unlinkedBuilding],
+  searchEntries: [
+    ...campus.searchEntries,
+    { id: unlinkedBuilding.id, label: unlinkedBuilding.name, type: 'building' },
+  ],
+}
+const alternateDestination: NavNode = {
+  ...destination,
+  id: 'room-302',
+  label: 'CS 302',
+  position: { lat: 11.823, lng: 122.168 },
+}
+const campusWithAlternateDestination: CampusBundle = {
+  ...campus,
+  nodes: [...campus.nodes, alternateDestination],
+  searchEntries: [
+    ...campus.searchEntries,
+    { id: 'room-entry-302', label: 'CS 302', type: 'room', nodeId: alternateDestination.id, buildingId: 'b1', floor: 3 },
+  ],
+}
+
 const defaultFindRoute = usePublicStore.getState().findRoute
 const defaultFindDestinationRoute = usePublicStore.getState().findDestinationRoute
 
@@ -197,6 +256,7 @@ function setReadyCampus(overrides: Partial<Parameters<typeof usePublicStore.setS
     fromNode: null,
     toNode: null,
     poiDestination: null,
+    revealedPoiIds: [],
     selectedBuilding: null,
     qrLocation: null,
     sheetState: 'hidden',
@@ -223,6 +283,7 @@ afterEach(() => {
     fromNode: null,
     toNode: null,
     poiDestination: null,
+    revealedPoiIds: [],
     selectedBuilding: null,
     qrLocation: null,
     sheetState: 'hidden',
@@ -233,6 +294,47 @@ afterEach(() => {
 })
 
 describe('Navigate setup and route preview', () => {
+  it('reveals matching authored POIs only while the destination picker query is active', () => {
+    setReadyCampus({ campus: campusWithSearchablePoi, revealedPoiIds: [] })
+    render(<NavigatePage />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Search building, room, or place' }))
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search destination' }), {
+      target: { value: 'Quiet Courtyard' },
+    })
+
+    expect(usePublicStore.getState().revealedPoiIds).toEqual([searchablePoiId])
+  })
+
+  it('clears revealed POI IDs when the destination query is emptied', () => {
+    setReadyCampus({ campus: campusWithSearchablePoi, revealedPoiIds: [searchablePoiId] })
+    render(<NavigatePage />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Search building, room, or place' }))
+    const searchBox = screen.getByRole('searchbox', { name: 'Search destination' })
+    fireEvent.change(searchBox, { target: { value: 'Quiet Courtyard' } })
+    expect(usePublicStore.getState().revealedPoiIds).toEqual([searchablePoiId])
+
+    fireEvent.change(searchBox, { target: { value: '' } })
+
+    expect(usePublicStore.getState().revealedPoiIds).toEqual([])
+  })
+
+  it('clears revealed POI IDs when the destination picker closes', () => {
+    setReadyCampus({ campus: campusWithSearchablePoi, revealedPoiIds: [searchablePoiId] })
+    render(<NavigatePage />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Search building, room, or place' }))
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search destination' }), {
+      target: { value: 'Quiet Courtyard' },
+    })
+    expect(usePublicStore.getState().revealedPoiIds).toEqual([searchablePoiId])
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close location search' }))
+
+    expect(usePublicStore.getState().revealedPoiIds).toEqual([])
+  })
+
   it('starts an authored no-node POI with stable identity and cleans it on End', () => {
     setReadyCampus({
       fromNode: start.id,
@@ -423,6 +525,52 @@ describe('Navigate setup and route preview', () => {
     expect(screen.getByText('CS 301')).toBeInTheDocument()
     expect(screen.queryByText('Active navigation')).toBeNull()
     expect(screen.queryByRole('button', { name: 'End navigation' })).toBeNull()
+  })
+
+  it('does not resume a previously started route after changing A to B and back to A', () => {
+    setReadyCampus({
+      campus: campusWithAlternateDestination,
+      fromNode: start.id,
+      toNode: destination.id,
+      findDestinationRoute: vi.fn(() => (
+        usePublicStore.getState().toNode === alternateDestination.id ? null : route
+      )),
+    })
+    render(<NavigatePage />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start navigation' }))
+    expect(screen.getByText('Active navigation')).toBeInTheDocument()
+
+    act(() => usePublicStore.setState({ toNode: alternateDestination.id }))
+    expect(screen.getByText('No route is currently available to this destination.')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Search building, room, or place' }))
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search destination' }), {
+      target: { value: 'CS 301' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Choose CS 301' }))
+
+    expect(usePublicStore.getState().toNode).toBe(destination.id)
+    expect(screen.getByText('Route preview')).toBeInTheDocument()
+    expect(screen.queryByText('Active navigation')).toBeNull()
+  })
+
+  it('shows an honest unavailable state for an unlinked building destination', () => {
+    setReadyCampus({ campus: campusWithUnlinkedBuilding, fromNode: start.id })
+    render(<NavigatePage />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Search building, room, or place' }))
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search destination' }), {
+      target: { value: 'North Studio' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Choose North Studio' }))
+
+    expect(screen.getByRole('status')).toHaveTextContent(/North Studio.*no published connection/i)
+    expect(screen.getByRole('button', { name: 'Search building, room, or place' })).toHaveTextContent('North Studio')
+    expect(usePublicStore.getState().toNode).toBeNull()
+    expect(usePublicStore.getState().poiDestination).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Start navigation' })).toBeNull()
   })
 
   it('keeps route preview TOP-only and passes route bounds to the camera seam', () => {

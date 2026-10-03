@@ -40,36 +40,6 @@ export interface WorkflowSnapshot {
   lastSavedAt: number
 }
 
-/** Test/development-only trace for the workflow half of the reload audit. */
-export interface WorkflowStatusTraceEntry {
-  field: 'syncStatus' | 'saveState'
-  source: 'setSyncStatus' | 'updateLifecycle'
-  from: string
-  to: string
-  at: number
-}
-
-const workflowStatusTrace: WorkflowStatusTraceEntry[] = []
-
-function recordWorkflowStatusTrace(
-  field: WorkflowStatusTraceEntry['field'],
-  source: WorkflowStatusTraceEntry['source'],
-  from: string,
-  to: string,
-): void {
-  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') return
-  workflowStatusTrace.push({ field, source, from, to, at: Date.now() })
-  if (workflowStatusTrace.length > 250) workflowStatusTrace.splice(0, workflowStatusTrace.length - 250)
-}
-
-export function __getWorkflowStatusTraceForTests(): WorkflowStatusTraceEntry[] {
-  return workflowStatusTrace.slice()
-}
-
-export function __resetWorkflowStatusTraceForTests(): void {
-  workflowStatusTrace.length = 0
-}
-
 // ── WorkflowStore ─────────────────────────────────────────────
 
 /**
@@ -162,7 +132,6 @@ export class WorkflowStore {
   }
 
   setSyncStatus(status: SyncStatus): void {
-    recordWorkflowStatusTrace('syncStatus', 'setSyncStatus', this._syncStatus, status)
     this._syncStatus = status
     this.commit()
   }
@@ -187,10 +156,7 @@ export class WorkflowStore {
     lastSaveReason?: 'manual' | 'autosave' | null
     lastSavedAt?: number
   }): void {
-    if (update.saveState !== undefined) {
-      recordWorkflowStatusTrace('saveState', 'updateLifecycle', this._saveState, update.saveState)
-      this._saveState = update.saveState
-    }
+    if (update.saveState !== undefined) this._saveState = update.saveState
     if (update.saveError !== undefined) this._saveError = update.saveError
     if (update.lastSaveReason !== undefined) this._lastSaveReason = update.lastSaveReason
     if (update.lastSavedAt !== undefined) this._lastSavedAt = update.lastSavedAt

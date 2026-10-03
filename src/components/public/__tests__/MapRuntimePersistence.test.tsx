@@ -5,7 +5,7 @@ import { AdaptiveShell } from '../AdaptiveShell'
 import { useNavigationMap } from '@/components/map/NavigationMap'
 import NavigationMap from '@/components/map/NavigationMap'
 import { usePublicStore } from '@/store/public-store'
-import type { CampusBundle } from '@/types/nav-types'
+import type { CampusBundle, CampusPOI, TracePath } from '@/types/nav-types'
 
 type FakeListener = (...args: unknown[]) => void
 type FakeSource = { setData: ReturnType<typeof vi.fn> }
@@ -49,7 +49,7 @@ interface FakeMapInstance {
 
 const COMMON_SOURCE_IDS = [
   'buildings', 'rooms', 'hallways', 'walls', 'stairs', 'elevators', 'doors', 'openings', 'entrances', 'pois',
-  'navigate-current-direction', 'navigate-current-position',
+  'navigate-current-direction', 'navigate-current-position', 'authored-roads',
 ]
 const COMMON_LAYER_IDS = [
   'buildings-fill', 'buildings-outline', 'buildings-extrusion', 'buildings-labels',
@@ -59,6 +59,8 @@ const COMMON_LAYER_IDS = [
   'elevators-shaft-fill', 'elevators-shaft-outline', 'elevators-cabin-outline', 'elevators-door-lines', 'elevators-layer',
   'doors-layer', 'openings-door-line', 'openings-door-fill', 'openings-door-outline', 'openings-window-fill', 'openings-window-outline',
   'entrances-layer', 'pois-layer', 'navigate-current-direction-arrow', 'navigate-current-position-point',
+  'authored-roads-outline', 'authored-roads-fill', 'authored-roads-path',
+  'pois-outdoor-extrusion',
 ]
 
 const mapInstances = vi.hoisted(() => [] as FakeMapInstance[])
@@ -207,6 +209,26 @@ const campusBundle = {
   boundingBox: boundsA,
 } satisfies CampusBundle
 
+const outdoorCampusPoi: CampusPOI = {
+  id: 'poi-outdoor-persistence',
+  label: 'Outdoor marker',
+  category: 'landmark',
+  scope: 'outdoor',
+  position: { lat: 11.805, lng: 122.105 },
+  properties: {},
+  geometry: { type: 'point', position: { lat: 11.805, lng: 122.105 } },
+}
+
+const authoredCampusRoad: TracePath = {
+  id: 'road-persistence',
+  name: 'Library Walk',
+  type: 'connector',
+  roadType: 'pedestrian',
+  floor: 0,
+  displayMode: 'visible',
+  points: [{ lat: 11.804, lng: 122.104 }, { lat: 11.806, lng: 122.106 }],
+}
+
 function RouteLayer({ screenName }: { screenName: string }) {
   const { map, isReady } = useNavigationMap()
 
@@ -310,8 +332,13 @@ describe('public map runtime persistence', () => {
     await waitFor(() => expect(mapInstances).toHaveLength(1))
     expect(await screen.findByTestId('explore-screen')).toBeInTheDocument()
     await waitFor(() => expectCommonScene(mapInstances[0]))
-    expect(commonSourceAdds(mapInstances[0])).toHaveLength(12)
-    expect(commonLayerAdds(mapInstances[0])).toHaveLength(31)
+    expect(commonSourceAdds(mapInstances[0])).toHaveLength(13)
+    expect(commonLayerAdds(mapInstances[0])).toHaveLength(35)
+    const layerAdds = mapInstances[0].layerAdds
+    expect(layerAdds.indexOf('authored-roads-outline')).toBeLessThan(layerAdds.indexOf('buildings-fill'))
+    expect(layerAdds.indexOf('authored-roads-fill')).toBeLessThan(layerAdds.indexOf('buildings-fill'))
+    expect(layerAdds.indexOf('authored-roads-path')).toBeLessThan(layerAdds.indexOf('buildings-fill'))
+    expect(layerAdds.indexOf('buildings-labels')).toBeLessThan(layerAdds.indexOf('route-core'))
   })
 
   it('keeps all common sources/layers and handlers across Explore ↔ Navigate without re-adding them', async () => {
@@ -325,8 +352,8 @@ describe('public map runtime persistence', () => {
     expect(map.handlers.get('click:transition-test-layer')?.size).toBe(1)
     const sourceAdds = commonSourceAdds(map)
     const layerAdds = commonLayerAdds(map)
-    expect(sourceAdds).toHaveLength(12)
-    expect(layerAdds).toHaveLength(31)
+    expect(sourceAdds).toHaveLength(13)
+    expect(layerAdds).toHaveLength(35)
     expect(map.handlers.get('click:buildings-fill')?.size).toBe(1)
     const persistentHandlers = persistentHandlerSnapshot(map)
 
@@ -380,8 +407,8 @@ describe('public map runtime persistence', () => {
     expect(mapInstances).toHaveLength(1)
     expect(map.remove).not.toHaveBeenCalled()
     expectCommonScene(map)
-    expect(commonSourceAdds(map)).toHaveLength(12)
-    expect(commonLayerAdds(map)).toHaveLength(31)
+    expect(commonSourceAdds(map)).toHaveLength(13)
+    expect(commonLayerAdds(map)).toHaveLength(35)
     expect(map.fitBounds).toHaveBeenCalledTimes(1)
     expect(map.getCenter()).toEqual({ lng: 122.25, lat: 11.9 })
     expect(map.getZoom()).toBe(19)
@@ -440,11 +467,28 @@ describe('public map runtime persistence', () => {
     const sourceAdds = commonSourceAdds(map)
     const layerAdds = commonLayerAdds(map)
     const buildingSource = map.sources.get('buildings')
+    const poiSource = map.sources.get('pois')
+    const authoredRoadSource = map.sources.get('authored-roads')
 
-    usePublicStore.setState({ campus: { ...campusBundle, boundingBox: boundsB } })
+    usePublicStore.setState({
+      campus: {
+        ...campusBundle,
+        boundingBox: boundsB,
+        poi: [outdoorCampusPoi],
+        traces: [authoredCampusRoad],
+      },
+    })
 
     await waitFor(() => expect(buildingSource?.setData).toHaveBeenCalled())
+    await waitFor(() => expect(poiSource?.setData).toHaveBeenCalledWith(expect.objectContaining({
+      features: [expect.objectContaining({ id: outdoorCampusPoi.id, properties: expect.objectContaining({ scope: 'outdoor' }) })],
+    })))
+    await waitFor(() => expect(authoredRoadSource?.setData).toHaveBeenCalledWith(expect.objectContaining({
+      features: [expect.objectContaining({ id: authoredCampusRoad.id, properties: expect.objectContaining({ road_type: 'pedestrian' }) })],
+    })))
     expect(map.sources.get('buildings')).toBe(buildingSource)
+    expect(map.sources.get('pois')).toBe(poiSource)
+    expect(map.sources.get('authored-roads')).toBe(authoredRoadSource)
     expect(commonSourceAdds(map)).toEqual(sourceAdds)
     expect(commonLayerAdds(map)).toEqual(layerAdds)
   })
@@ -457,11 +501,31 @@ describe('public map runtime persistence', () => {
     const priorSourceAddCount = commonSourceAdds(map).length
     const priorLayerAddCount = commonLayerAdds(map).length
 
+    usePublicStore.setState({
+      campus: {
+        ...campusBundle,
+        poi: [outdoorCampusPoi],
+        traces: [authoredCampusRoad],
+      },
+    })
+    await waitFor(() => expect(map.sources.get('pois')?.setData).toHaveBeenCalledWith(expect.objectContaining({
+      features: [expect.objectContaining({ id: outdoorCampusPoi.id })],
+    })))
+    await waitFor(() => expect(map.sources.get('authored-roads')?.setData).toHaveBeenCalledWith(expect.objectContaining({
+      features: [expect.objectContaining({ id: authoredCampusRoad.id })],
+    })))
+
     map.simulateStyleReload()
     await waitFor(() => expectCommonScene(map))
+    await waitFor(() => expect(map.sources.get('pois')?.setData).toHaveBeenCalledWith(expect.objectContaining({
+      features: [expect.objectContaining({ id: outdoorCampusPoi.id })],
+    })))
+    await waitFor(() => expect(map.sources.get('authored-roads')?.setData).toHaveBeenCalledWith(expect.objectContaining({
+      features: [expect.objectContaining({ id: authoredCampusRoad.id })],
+    })))
 
-    expect(commonSourceAdds(map)).toHaveLength(priorSourceAddCount + 12)
-    expect(commonLayerAdds(map)).toHaveLength(priorLayerAddCount + 31)
+    expect(commonSourceAdds(map)).toHaveLength(priorSourceAddCount + 13)
+    expect(commonLayerAdds(map)).toHaveLength(priorLayerAddCount + 35)
     view.unmount()
   })
 })

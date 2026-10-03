@@ -302,7 +302,14 @@ export function NavigationMapHost() {
       data-testid="navigation-map-host"
       data-active={isActive ? 'true' : 'false'}
       aria-hidden={!isActive}
-      style={{ width: '100%', height: '100%', pointerEvents: isActive ? 'auto' : 'none' }}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: isActive ? 'auto' : 'none',
+      }}
     />
   )
 }

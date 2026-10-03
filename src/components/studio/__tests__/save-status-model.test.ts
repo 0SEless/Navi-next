@@ -41,19 +41,6 @@ describe('Studio save status model', () => {
     expect(getSaveStatusModel({ ...base, saveState: 'dirty-while-saving' }).label).toBe('Saving...')
   })
 
-  it('surfaces a bounded automatic retry instead of claiming a normal save is still running', () => {
-    const model = getSaveStatusModel({
-      ...base,
-      syncStatus: 'syncing',
-      syncError: 'Save failed — retrying automatically',
-    })
-
-    expect(model.label).toBe('Save failed — retrying automatically')
-    expect(model.color).toBe('#d97706')
-    expect(model.showRecoveryActions).toBe(false)
-    expect(model.diagnostic).toBe('Save failed — retrying automatically')
-  })
-
   it('shows a neutral checking state while server freshness is unresolved', () => {
     const model = getSaveStatusModel({
       ...base,

@@ -70,6 +70,46 @@ function snapshotData() {
 }
 
 describe('GET /api/public-campus — Phase 9B source safety', () => {
+  it('returns snapshot floorData intact when no published row exists', async () => {
+    const floors = [0, 1, 2].map(level => ({
+      id: `floor-${level}`, level, planImageId: `snapshot-${level}.png`,
+      planAlignment: { offset: { x: level, y: 0 }, scale: 1, rotation: 0, opacity: 0.7 },
+      walls: [{ id: `wall-${level}` }], rooms: [{ id: `room-${level}` }],
+      doors: [{ id: `door-${level}` }], hallways: [{ id: `hall-${level}` }],
+    }))
+    const queriedTables = configureSupabase(
+      { data: null, error: null },
+      { data: { data: { ...snapshotData(), buildings: [{ id: 'snapshot-building', name: 'Snapshot Building', floorData: floors }] } }, error: null },
+    )
+
+    const response = await GET(request())
+    const body = await response.json()
+    expect(response.status).toBe(200)
+    expect(body.source).toBe('graph_snapshots')
+    expect(body.buildings[0].floorData).toEqual(floors)
+    expect(queriedTables).toEqual(['published_maps', 'graph_snapshots'])
+  })
+
+  it('returns published floor plans without consulting a draft snapshot', async () => {
+    const publishedBuilding = {
+      id: 'building-1', name: 'Building 1',
+      floorPlanUrls: { 0: 'published-gf', 1: 'published-1f', 2: 'published-2f' },
+      floorPlanVisuals: { 1: { imageUrl: 'published-1f', alignment: { offset: { x: 1, y: 2 }, scale: 1, rotation: 3, opacity: 0.8 } } },
+    }
+    const queriedTables = configureSupabase(
+      { data: { artifacts: publishedArtifacts({ buildingIndex: { buildings: [publishedBuilding] } }) }, error: null },
+      { data: { data: snapshotData() }, error: null },
+    )
+
+    const response = await GET(request())
+    const body = await response.json()
+    expect(response.status).toBe(200)
+    expect(body.source).toBe('published_maps')
+    expect(body.buildings).toEqual([publishedBuilding])
+    expect(JSON.stringify(body)).not.toContain('snapshot-building')
+    expect(queriedTables).toEqual(['published_maps'])
+  })
+
   it('returns a valid published row and never queries graph_snapshots', async () => {
     const queriedTables = configureSupabase(
       { data: { artifacts: publishedArtifacts() }, error: null },

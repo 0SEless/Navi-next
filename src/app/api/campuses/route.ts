@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   if (campusId) {
     const { data, error } = await supabase
       .from("graph_snapshots")
-      .select("campus_id, version, updated_at, data, authored_document")
+      .select("campus_id, version, updated_at, data")
       .eq("campus_id", campusId)
       .maybeSingle();
 
@@ -55,12 +55,11 @@ export async function GET(request: NextRequest) {
       .eq("campus_id", campusId);
 
     const snapData = (data.data ?? {}) as Record<string, unknown>;
-    const authoredMetadata = ((data.authored_document as { metadata?: Record<string, unknown> } | null)?.metadata ?? {});
     return NextResponse.json({
       id: data.campus_id,
       campus_id: data.campus_id,
-      name: typeof snapData.name === 'string' ? snapData.name : (typeof authoredMetadata.name === 'string' ? authoredMetadata.name : data.campus_id),
-      description: typeof snapData.description === 'string' ? snapData.description : (typeof authoredMetadata.description === 'string' ? authoredMetadata.description : ''),
+      name: typeof snapData.name === 'string' ? snapData.name : data.campus_id,
+      description: typeof snapData.description === 'string' ? snapData.description : '',
       address: typeof snapData.address === 'string' ? snapData.address : '',
       version: data.version,
       updated_at: data.updated_at,
@@ -71,7 +70,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("graph_snapshots")
-    .select("campus_id, version, updated_at, data, authored_document")
+    .select("campus_id, version, updated_at, data")
     .order("campus_id");
 
   if (error) {
@@ -85,12 +84,11 @@ export async function GET(request: NextRequest) {
         .select("*", { count: "exact", head: true })
         .eq("campus_id", c.campus_id);
       const snapData = (c.data ?? {}) as Record<string, unknown>;
-      const authoredMetadata = ((c.authored_document as { metadata?: Record<string, unknown> } | null)?.metadata ?? {});
       return {
         id: c.campus_id,
         campus_id: c.campus_id,
-        name: typeof snapData.name === 'string' ? snapData.name : (typeof authoredMetadata.name === 'string' ? authoredMetadata.name : c.campus_id),
-        description: typeof snapData.description === 'string' ? snapData.description : (typeof authoredMetadata.description === 'string' ? authoredMetadata.description : ''),
+        name: typeof snapData.name === 'string' ? snapData.name : c.campus_id,
+        description: typeof snapData.description === 'string' ? snapData.description : '',
         address: typeof snapData.address === 'string' ? snapData.address : '',
         version: c.version,
         updated_at: c.updated_at,

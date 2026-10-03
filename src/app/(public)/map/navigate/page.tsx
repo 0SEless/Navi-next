@@ -340,6 +340,7 @@ function NavigatePageContent() {
   const setQrLocation = usePublicStore((s) => s.setQrLocation)
   const setTo = usePublicStore((s) => s.setTo)
   const setPoiDestination = usePublicStore((s) => s.setPoiDestination)
+  const setRevealedPoiIds = usePublicStore((s) => s.setRevealedPoiIds)
   const activeFloor = usePublicStore((s) => s.activeFloor)
   const preferences = usePublicStore((s) => s.preferences)
   const setNavigationPreferences = usePublicStore((s) => s.setNavigationPreferences)
@@ -355,6 +356,7 @@ function NavigatePageContent() {
   const [toast, setToast] = useState<string | null>(null)
   const [locating, setLocating] = useState(false)
   const [startedRouteKey, setStartedRouteKey] = useState<string | null>(null)
+  const [unlinkedBuildingDestination, setUnlinkedBuildingDestination] = useState<string | null>(null)
   const [activeCameraMode, setActiveCameraMode] = useState<NavigationCameraMode>('TOP')
   const [activeHeadingFollow, setActiveHeadingFollow] = useState(() => preferences.navigation.headingFollow)
   const [activeTopOrientation, setActiveTopOrientation] = useState<TopCameraOrientation>(
@@ -431,7 +433,7 @@ function NavigatePageContent() {
     ? activePoiDestination?.label ?? poiEntry?.label ?? poiDestination.poiId
     : toNode
       ? nodeById.get(toNode)?.label ?? toEntry?.label ?? toNode
-    : null
+      : unlinkedBuildingDestination
   const destinationCategory = isPoiRoute
     ? formatPoiCategory(activePoiDestination?.category ?? poiEntry?.category ?? null)
     : null
@@ -450,9 +452,21 @@ function NavigatePageContent() {
       .filter((entry) => picker === 'from'
         ? Boolean(entry.nodeId)
         : Boolean(entry.nodeId)
+          || entry.type === 'building'
           || (entry.type === 'poi' && entry.source === 'authored' && Boolean(entry.sourceId ?? entry.id)))
       .slice(0, 12)
   }, [campus, picker, query, searchPublishedEntries])
+
+  useEffect(() => {
+    if (!campus || !picker || !query.trim()) {
+      setRevealedPoiIds([])
+      return
+    }
+
+    setRevealedPoiIds(searchResults
+      .filter((entry) => entry.type === 'poi')
+      .map((entry) => entry.sourceId ?? entry.id))
+  }, [campus, picker, query, searchResults, setRevealedPoiIds])
 
   const recentEntries = useMemo(() => {
     if (!campus) return []
@@ -478,12 +492,24 @@ function NavigatePageContent() {
         showToast('This location is unavailable as an origin')
         return
       }
+      setStartedRouteKey(null)
       setFrom(entry.nodeId)
     } else if (entry.nodeId) {
+      setStartedRouteKey(null)
+      setUnlinkedBuildingDestination(null)
       setTo(entry.nodeId)
       addRecentDestination(entry.nodeId)
     } else if (entry.type === 'poi' && entry.source === 'authored') {
+      setStartedRouteKey(null)
+      setUnlinkedBuildingDestination(null)
       setPoiDestination(entry.sourceId ?? entry.id)
+    } else if (entry.type === 'building') {
+      setStartedRouteKey(null)
+      setTo(null)
+      setPoiDestination(null)
+      setUnlinkedBuildingDestination(entry.label)
+      closePicker()
+      return
     } else {
       showToast('This destination is unavailable')
       return
@@ -509,6 +535,7 @@ function NavigatePageContent() {
           showToast('Location unavailable — choose a supported origin')
           return
         }
+        setStartedRouteKey(null)
         setFrom(resolved.node.id)
         showToast(`Current location set: ${resolved.node.label}`)
       },
@@ -527,11 +554,14 @@ function NavigatePageContent() {
           showToast('QR location found, but no routing anchor is published')
           return
         }
+        setStartedRouteKey(null)
         setQrLocation(location)
       } else if (!location.nodeId) {
         showToast('This QR location cannot be used as a destination')
         return
       } else {
+        setStartedRouteKey(null)
+        setUnlinkedBuildingDestination(null)
         setTo(location.nodeId)
         addRecentDestination(location.nodeId)
       }
@@ -543,6 +573,7 @@ function NavigatePageContent() {
   const swapRoute = () => {
     if (poiDestination) return
     const currentFrom = fromNode
+    setStartedRouteKey(null)
     setFrom(toNode)
     setTo(currentFrom)
   }
@@ -552,6 +583,7 @@ function NavigatePageContent() {
     setFrom(null)
     setTo(null)
     setPoiDestination(null)
+    setUnlinkedBuildingDestination(null)
     setActiveFloor(0)
     setStartedRouteKey(null)
     setActiveCameraMode('TOP')
@@ -725,7 +757,9 @@ function NavigatePageContent() {
                 <button
                   type="button"
                   key={entry.nodeId}
-                  onClick={() => {
+                onClick={() => {
+                    setStartedRouteKey(null)
+                    setUnlinkedBuildingDestination(null)
                     setTo(entry.nodeId)
                     addRecentDestination(entry.nodeId)
                   }}
@@ -766,6 +800,11 @@ function NavigatePageContent() {
           <div className="pointer-events-auto rounded-xl border border-[var(--navi-error)]/30 bg-[var(--navi-error)]/10 p-3 text-sm text-[var(--navi-error)] shadow-lg backdrop-blur" role="alert">
             No route is currently available to this destination.
           </div>
+        ) : null}
+        {unlinkedBuildingDestination ? (
+          <p className="pointer-events-auto rounded-xl border border-[var(--navi-border)] bg-[var(--navi-card)]/95 p-3 text-sm text-[var(--navi-text-secondary)] shadow-lg backdrop-blur" role="status" aria-live="polite">
+            {unlinkedBuildingDestination} has no published connection to the campus walking network yet. Choose a destination with a published route connection.
+          </p>
         ) : null}
         {!fromNode && hasDestination ? (
           <div className="pointer-events-auto rounded-xl border border-[var(--navi-border)] bg-[var(--navi-card)]/95 p-3 text-sm text-[var(--navi-text-secondary)] shadow-lg backdrop-blur" role="status">

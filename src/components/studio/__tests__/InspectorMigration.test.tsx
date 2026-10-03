@@ -19,7 +19,7 @@ import { useStudioStore } from '@/store/studio-store'
 afterEach(() => {
   cleanup()
   useStudioStore.setState({ selectedNodeId: null, activeBuildingId: null })
-  useGraphStore.setState({ graph: { name: 'Campus', buildings: [] } as any, authoredDocument: null, currentMapId: null, syncStatus: 'idle', pendingAuthoredMutations: [] })
+  useGraphStore.setState({ graph: { name: 'Campus', buildings: [] } as any })
 })
 
 /**

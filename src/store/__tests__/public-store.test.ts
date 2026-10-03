@@ -295,6 +295,34 @@ describe('usePublicStore campus data layer', () => {
     expect(state.activeFloor).toBe(0)
   })
 
+  it('reports development timing and counts without logging campus payload values', async () => {
+    const privateLabel = 'diagnostic-private-campus-label'
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {})
+    vi.stubEnv('NODE_ENV', 'development')
+
+    try {
+      stubFetch(() => jsonResponse({
+        ...graphFixture,
+        campusName: privateLabel,
+      }))
+      const store = createPublicStore({ cache: createMemoryCampusCacheRepository() })
+
+      await store.getState().fetchCampusData('test-campus')
+
+      const diagnosticOutput = JSON.stringify(debug.mock.calls)
+      expect(diagnosticOutput).toContain('timeToHeadersMs')
+      expect(diagnosticOutput).toContain('bodyReadMs')
+      expect(diagnosticOutput).toContain('jsonParseMs')
+      expect(diagnosticOutput).toContain('normalizationMs')
+      expect(diagnosticOutput).not.toContain(privateLabel)
+      expect(store.getState().campusStatus).toBe('ready')
+      expect(store.getState().campus?.campusName).toBe(privateLabel)
+    } finally {
+      debug.mockRestore()
+      vi.unstubAllEnvs()
+    }
+  })
+
   it('preserves serialized routing through the shared public navigation seam', async () => {
     const routing = {
       sourceRoadId: 'road-shared-seam',
@@ -367,6 +395,220 @@ describe('usePublicStore campus data layer', () => {
     expect(state.campus!.poi).toHaveLength(1)
     expect(state.campus!.qrIndex).toEqual(qrIndexFixture)
     expect(state.campusStatus).toBe('ready')
+  })
+
+  it('normalizes snapshot POIs and retains valid legacy authored traces', async () => {
+    const snapshotPoi = {
+      id: 'poi-outdoor-circle',
+      name: 'Basketball Court',
+      category: 'recreation',
+      scope: 'outdoor',
+      geometry: { type: 'circle', center: { lat: 11.8, lng: 122.1 }, radius: 18 },
+      metadata: { editorLabel: 'Court A' },
+      visibility: { showOnMap: true, searchable: true },
+    }
+    const validTrace = {
+      id: 'trace-campus-road',
+      name: 'Main walk',
+      type: 'arterial',
+      floor: 0,
+      points: [{ lat: 11.8, lng: 122.1 }, { lat: 11.801, lng: 122.102 }],
+      metadata: { pavement: 'concrete' },
+      routing: { feature: 'stairs', walkable: true, wheelchairAccessible: false },
+    }
+
+    stubFetch((url) => url.includes('/api/public-campus')
+      ? jsonResponse({
+          campusId: 'test-campus',
+          source: 'graph_snapshots',
+          nodes: graphFixture.nodes,
+          edges: graphFixture.edges,
+          pois: [snapshotPoi, snapshotPoi, {
+            id: 'poi-invalid-shape',
+            name: 'Invalid Shape',
+            category: 'facility',
+            scope: 'outdoor',
+            geometry: { type: 'rectangle', points: [{ lat: 11.8, lng: 122.1 }] },
+          }],
+          traces: [validTrace, { ...validTrace, name: 'Duplicate' }, {
+            id: 'trace-short', type: 'connector', floor: 0,
+            points: [{ lat: 11.8, lng: 122.1 }],
+          }],
+        })
+      : jsonResponse({ error: 'not found' }, 404))
+
+    await usePublicStore.getState().fetchCampusData('test-campus')
+
+    const campus = usePublicStore.getState().campus
+    expect(campus?.poi).toHaveLength(1)
+    expect(campus?.poi[0]).toMatchObject({
+      id: 'poi-outdoor-circle',
+      label: 'Basketball Court',
+      scope: 'outdoor',
+      category: 'recreation',
+      position: { lat: 11.8, lng: 122.1 },
+      geometry: snapshotPoi.geometry,
+      properties: { editorLabel: 'Court A' },
+      metadata: { editorLabel: 'Court A' },
+      visibility: { showOnMap: true, searchable: true },
+    })
+    expect(campus?.traces).toHaveLength(1)
+    expect(campus?.traces?.[0]).toMatchObject({
+      id: 'trace-campus-road',
+      points: validTrace.points,
+      metadata: validTrace.metadata,
+      routing: validTrace.routing,
+    })
+    expect(campus?.edges).toHaveLength(2)
+  })
+
+  it('adds searchable snapshot POIs without revealing them during store search', async () => {
+    const hiddenSearchablePoi = {
+      id: 'poi-hidden-searchable',
+      name: 'TAMBAYAN',
+      category: 'waiting_area',
+      scope: 'outdoor',
+      position: { lat: 11.8, lng: 122.1 },
+      geometry: { type: 'circle', center: { lat: 11.8, lng: 122.1 }, radius: 12 },
+      visibility: { showOnMap: false, searchable: true },
+    }
+    const hiddenUnsearchablePoi = {
+      ...hiddenSearchablePoi,
+      id: 'poi-hidden-unsearchable',
+      name: 'Staff-only place',
+      visibility: { showOnMap: false, searchable: false },
+    }
+
+    stubFetch((url) => url.includes('/api/public-campus')
+      ? jsonResponse({
+          campusId: 'test-campus',
+          source: 'graph_snapshots',
+          nodes: graphFixture.nodes,
+          edges: graphFixture.edges,
+          pois: [hiddenSearchablePoi, hiddenUnsearchablePoi],
+        })
+      : jsonResponse({ error: 'not found' }, 404))
+
+    await usePublicStore.getState().fetchCampusData('test-campus')
+
+    const campus = usePublicStore.getState().campus
+    const entry = campus?.searchEntries.find((candidate) => candidate.sourceId === hiddenSearchablePoi.id)
+    expect(entry).toMatchObject({
+      id: hiddenSearchablePoi.id,
+      label: 'TAMBAYAN',
+      type: 'poi',
+      position: hiddenSearchablePoi.position,
+      category: 'waiting_area',
+      source: 'authored',
+      sourceId: hiddenSearchablePoi.id,
+    })
+    expect(campus?.searchEntries.some((candidate) => candidate.sourceId === hiddenUnsearchablePoi.id)).toBe(false)
+    expect(campus?.poi.find((poi) => poi.id === hiddenSearchablePoi.id)).toMatchObject({
+      showOnMap: false,
+      visibility: { showOnMap: false, searchable: true },
+    })
+
+    usePublicStore.setState({ revealedPoiIds: ['poi-already-revealed'] })
+    const results = usePublicStore.getState().search('TAMBAYAN')
+    expect(results.map((result) => result.sourceId ?? result.id)).toEqual([hiddenSearchablePoi.id])
+    expect(usePublicStore.getState().revealedPoiIds).toEqual(['poi-already-revealed'])
+  })
+
+  it('deduplicates published POIs by stable ID while retaining published metadata', async () => {
+    const publishedPoi = {
+      id: 'poi-published-park',
+      label: 'Campus Park',
+      category: 'recreation',
+      scope: 'outdoor',
+      position: { lat: 11.81, lng: 122.11 },
+      geometry: { type: 'rectangle', points: [
+        { lat: 11.81, lng: 122.11 }, { lat: 11.81, lng: 122.111 },
+        { lat: 11.811, lng: 122.111 }, { lat: 11.811, lng: 122.11 },
+      ] },
+      properties: { source: 'published-authored' },
+    }
+
+    stubFetch((url) => url.includes('/api/public-campus')
+      ? jsonResponse({
+          campusId: 'test-campus',
+          source: 'published_maps',
+          nodes: graphFixture.nodes,
+          edges: graphFixture.edges,
+          pois: [{ ...publishedPoi, properties: { source: 'snapshot-fallback' } }],
+          artifacts: { poiIndex: { version: '1.0.0', points: [publishedPoi, publishedPoi] } },
+        })
+      : jsonResponse({ error: 'not found' }, 404))
+
+    await usePublicStore.getState().fetchCampusData('test-campus')
+
+    expect(usePublicStore.getState().campus?.poi).toHaveLength(1)
+    expect(usePublicStore.getState().campus?.poi[0]).toMatchObject({
+      id: 'poi-published-park',
+      geometry: publishedPoi.geometry,
+      position: publishedPoi.position,
+      scope: 'outdoor',
+      properties: { source: 'published-authored' },
+    })
+  })
+
+  it('normalizes canonical Roads and keeps navigation-only data separate from graph edges', async () => {
+    const visibleRoad = {
+      id: 'road-library-walk',
+      name: 'Library Walk',
+      type: 'pedestrian',
+      polyline: { points: [{ lat: 11.81, lng: 122.11 }, { lat: 11.811, lng: 122.12 }] },
+      width: 3,
+      surface: 'brick',
+      displayMode: 'visible',
+      routing: { feature: 'ramp', walkable: true },
+      metadata: { source: 'studio' },
+    }
+    const navigationOnlyRoad = {
+      id: 'road-service-access',
+      name: 'Service Access',
+      type: 'service',
+      polyline: { points: [{ lat: 11.82, lng: 122.11 }, { lat: 11.821, lng: 122.12 }] },
+      width: 4,
+      surface: 'concrete',
+      displayMode: 'navigation-only',
+      metadata: { source: 'studio' },
+    }
+
+    stubFetch((url) => url.includes('/api/public-campus')
+      ? jsonResponse({
+          campusId: 'test-campus',
+          source: 'published_maps',
+          nodes: graphFixture.nodes,
+          edges: graphFixture.edges,
+          traces: [visibleRoad, navigationOnlyRoad],
+          artifacts: { metadata: { revision: '13' } },
+        })
+      : jsonResponse({ error: 'not found' }, 404))
+
+    await usePublicStore.getState().fetchCampusData('test-campus')
+
+    const campus = usePublicStore.getState().campus
+    expect(campus?.traces).toHaveLength(2)
+    expect(campus?.traces?.[0]).toMatchObject({
+      id: 'road-library-walk',
+      name: 'Library Walk',
+      type: 'connector',
+      roadType: 'pedestrian',
+      points: visibleRoad.polyline.points,
+      displayMode: 'visible',
+      width: 3,
+      surface: 'brick',
+      routing: visibleRoad.routing,
+      metadata: visibleRoad.metadata,
+    })
+    expect(campus?.traces?.[1]).toMatchObject({
+      id: 'road-service-access',
+      type: 'arterial',
+      roadType: 'service',
+      displayMode: 'navigation-only',
+      points: navigationOnlyRoad.polyline.points,
+    })
+    expect(campus?.edges).toEqual(fixtureEdges)
   })
 
   it('preserves authored POI search identity and finds normalized category tokens', async () => {

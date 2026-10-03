@@ -220,22 +220,14 @@ describe('graph store per-campus save serialization and revision contract', () =
   })
 
   it('never reports synchronized when the revision cannot be confirmed', async () => {
-    vi.useFakeTimers()
-    try {
     createMockServer({ returnUpdatedAt: false, failGet: true })
 
     setClientGraph('Edit A')
-    const savePromise = useGraphStore.getState().save()
-    const rejection = expect(savePromise).rejects.toThrow(/could not be confirmed|revision/i)
-    await vi.advanceTimersByTimeAsync(47_000)
-    await rejection
+    await expect(useGraphStore.getState().save()).rejects.toThrow(/could not be confirmed|revision/i)
 
     expect(useGraphStore.getState().syncStatus).toBe('error')
     expect(useGraphStore.getState().syncStatus).not.toBe('synced')
     expect(readMarker().serverTimestamp).toBe('R0')
-    } finally {
-      vi.useRealTimers()
-    }
   })
 
   it('uses the POST response revision directly (migration 009 path, no GET confirmation)', async () => {
@@ -281,20 +273,12 @@ describe('graph store per-campus save serialization and revision contract', () =
   })
 
   it('never reports synchronized when the save request fails', async () => {
-    vi.useFakeTimers()
-    try {
     createMockServer({ postStatus: 500 })
 
     setClientGraph('Edit A')
-    const savePromise = useGraphStore.getState().save()
-    const rejection = expect(savePromise).rejects.toThrow(/server exploded/)
-    await vi.advanceTimersByTimeAsync(47_000)
-    await rejection
+    await expect(useGraphStore.getState().save()).rejects.toThrow(/server exploded/)
 
     expect(useGraphStore.getState().syncStatus).toBe('error')
     expect(useGraphStore.getState().syncStatus).not.toBe('synced')
-    } finally {
-      vi.useRealTimers()
-    }
   })
 })

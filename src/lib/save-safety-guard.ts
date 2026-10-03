@@ -39,9 +39,6 @@ export type GuardResult =
   | { allowed: true }
   | { allowed: false; reason: string; removed: Array<{ type: string; ids: string[] }> }
 
-/** Optional in-memory observer for aggregate diagnostics; callers must not log its identity argument. */
-export type GuardRejectedRemovalObserver = (type: keyof GuardCollections, id: string) => void
-
 const OUTDOOR = '__outdoor__'
 const idsOf = (items?: GuardedEntity[]) => new Set((items ?? []).map((x) => x.id))
 
@@ -77,7 +74,6 @@ export function guardCrossScopeDestruction(
   previous: GuardCollections,
   candidate: GuardCollections,
   scope: GuardScope,
-  onRejectedRemoval?: GuardRejectedRemovalObserver,
 ): GuardResult {
   const removed: Array<{ type: string; ids: string[] }> = []
 
@@ -93,7 +89,6 @@ export function guardCrossScopeDestruction(
       if (inScope(scope, e, kind)) continue
       if (allowEdgeSideEffect && scope.kind === 'route' && kind === 'node') continue
       bad.push(e.id)
-      onRejectedRemoval?.(type, e.id)
     }
     if (bad.length > 0) removed.push({ type, ids: bad.slice(0, 10) })
   }
@@ -121,7 +116,6 @@ export function guardCrossScopeDestruction(
     const edgesRemovable = scope.kind === 'outdoor' || scope.kind === 'route' || scope.kind === 'building' || scope.kind === 'floor'
     if (endpointInScope && edgesRemovable) continue
     badEdges.push(e.id)
-    onRejectedRemoval?.('edges', e.id)
   }
   if (badEdges.length > 0) removed.push({ type: 'edges', ids: badEdges.slice(0, 10) })
 

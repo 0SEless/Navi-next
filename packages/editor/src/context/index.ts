@@ -59,4 +59,6 @@ export {
   useActiveBuilding,
   useBuilding,
   useFloorCount,
+  useFloor,
+  useBuildingFloors,
 } from './use-document-selector'

@@ -19,21 +19,16 @@ type MutationOutcome =
   | "UNKNOWN"
 
 function logMutationLifecycle(entry: {
-  event: 'save-attempt'
-  attemptNumber: number | null
+  requestId: string
+  mutationId: string | null
+  campusId: string | null
+  expectedRevision: string | null
   durationMs: number
   outcome: MutationOutcome
   status: number
 }): void {
   // Structured lifecycle log. Never includes the graph payload or credentials.
   console.log(`[api/graph] lifecycle ${JSON.stringify(entry)}`)
-}
-
-function requestNumberHeader(request: NextRequest, name: string): number | null {
-  const raw = request.headers.get(name)
-  if (!raw) return null
-  const value = Number(raw)
-  return Number.isSafeInteger(value) ? value : null
 }
 
 function isAbortLike(error: unknown, controller: AbortController): boolean {
@@ -84,7 +79,7 @@ export async function GET(request: NextRequest) {
     };
 
   if (result.error) {
-    console.error('[api/graph] graph_snapshots query failed');
+    console.error(`[api/graph] graph_snapshots query failed for campus "${campusId}":`, result.error);
     return NextResponse.json({ error: result.error.message }, { status: 500 });
   }
 
@@ -112,11 +107,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = (globalThis.crypto?.randomUUID?.() ?? `req-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
   const startedAt = Date.now();
   const controller = new AbortController();
   const timeoutTimer = setTimeout(() => controller.abort(), RPC_TIMEOUT_MS);
-  const attemptNumber = requestNumberHeader(request, "x-navi-save-attempt");
+  let mutationId: string | null = null;
   let campusId: string | null = null;
+  let expectedRevision: string | null = null;
   let outcome: MutationOutcome = "UNKNOWN";
   let status = 500;
 
@@ -125,7 +122,9 @@ export async function POST(request: NextRequest) {
     if (unauthorized) return unauthorized;
 
     const body = await request.json();
+    mutationId = typeof body?.mutationId === "string" ? body.mutationId : null;
     campusId = getCampusIdFromBody(body) ?? null;
+    expectedRevision = typeof body?.expectedServerUpdatedAt === "string" ? body.expectedServerUpdatedAt : null;
 
     if (!campusId) {
       outcome = "INVALID_REQUEST";
@@ -158,7 +157,12 @@ export async function POST(request: NextRequest) {
       //     the client's network-error detection actually works; fall back to
       //     a stable generic message otherwise.
       const errMsg = rpcError.message || rpcError.details || "Supabase RPC failed";
-      console.error("[api/graph] sync_graph_snapshot RPC failed");
+      console.error("[api/graph] sync_graph_snapshot RPC failed:", {
+        message: rpcError.message ?? null,
+        code: rpcError.code ?? null,
+        hint: rpcError.hint ?? null,
+        details: rpcError.details ?? null,
+      });
       if (isAbortLike(rpcError, controller)) {
         outcome = "TIMEOUT";
         status = 504;
@@ -196,15 +200,17 @@ export async function POST(request: NextRequest) {
       );
     }
     const msg = e instanceof Error ? e.message : "Invalid request";
-    console.error("[api/graph] POST handler error");
+    console.error("[api/graph] POST handler error:", e);
     outcome = "UNKNOWN";
     status = 400;
     return NextResponse.json({ error: msg }, { status: 400 });
   } finally {
     clearTimeout(timeoutTimer);
     logMutationLifecycle({
-      event: 'save-attempt',
-      attemptNumber,
+      requestId,
+      mutationId,
+      campusId,
+      expectedRevision,
       durationMs: Date.now() - startedAt,
       outcome,
       status,

@@ -1,6 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
+import { getCanonicalCampusId } from '@/lib/canonical-campus'
 import type {
   Building,
   BuildingEntrance,
@@ -11,6 +12,8 @@ import type {
   LatLng,
   SearchEntry,
   CampusBundle,
+  CampusPOI,
+  TracePath,
 } from '@/types/nav-types'
 import type { NavRoute } from '@/types/route-types'
 import type { PrimaryNavId } from '@/lib/public-app-contracts'
@@ -25,8 +28,13 @@ import {
 } from '@/lib/public-preferences'
 import { findNavRoute, findPoiNavRoute } from '@/lib/findRoute'
 import { reconcileRecentDestinationIds } from '@/lib/home-content'
-import { isValidRoadEdgeRouting, SpatialQueryService } from '@navi/core'
-import type { FloorGeometryArtifact, PanoramaIndex, QrIndex } from '@navi/core'
+import {
+  getWorldPointOfInterestRepresentative,
+  isValidRoadEdgeRouting,
+  SpatialQueryService,
+  validateWorldPointOfInterestGeometry,
+} from '@navi/core'
+import type { FloorGeometryArtifact, PanoramaIndex, QrIndex, RoadType, WorldPOIGeometry } from '@navi/core'
 import type { QrLocation } from '@/lib/qr-location'
 import {
   normalizePublicCampusResult,
@@ -144,6 +152,7 @@ export interface PublicState {
   exitIndoorContext: () => void
   fetchCampusData: (campusId?: string) => Promise<void>
   search: (query: string) => SearchEntry[]
+  setRevealedPoiIds: (ids: string[]) => void
   clearRevealedPoiIds: () => void
   findRoute: (fromId: string, toId: string) => NavRoute | null
   findDestinationRoute: (fromId: string) => NavRoute | null
@@ -165,15 +174,20 @@ const RECENT_SEARCH_KEY = 'navi-recent-searches'
 const ONBOARDING_KEY = 'navi-onboarded'
 const DEFAULT_CAMPUS_KEY = 'navi-default-campus'
 const LEGACY_CAMPUS_KEY = 'navi-selected-campus'
+const DEFAULT_CAMPUS_CONFIG_KEY = 'navi-default-campus-config'
 const MAX_RECENT = 8
 
-function loadDefaultCampusId(): string | null {
-  if (typeof window === 'undefined') return null
+function loadDefaultCampusId(): string {
+  const canonicalCampusId = getCanonicalCampusId()
+  if (typeof window === 'undefined') return canonicalCampusId
   try {
-    return localStorage.getItem(DEFAULT_CAMPUS_KEY)
+    const savedCampusId = localStorage.getItem(DEFAULT_CAMPUS_KEY)
       || localStorage.getItem(LEGACY_CAMPUS_KEY)
-      || null
-  } catch { return null }
+    const savedCanonicalCampusId = localStorage.getItem(DEFAULT_CAMPUS_CONFIG_KEY)
+    return savedCampusId && savedCanonicalCampusId === canonicalCampusId
+      ? savedCampusId
+      : canonicalCampusId
+  } catch { return canonicalCampusId }
 }
 
 function saveDefaultCampusId(id: string | null) {
@@ -182,10 +196,12 @@ function saveDefaultCampusId(id: string | null) {
     if (id === null) {
       localStorage.removeItem(DEFAULT_CAMPUS_KEY)
       localStorage.removeItem(LEGACY_CAMPUS_KEY)
+      localStorage.removeItem(DEFAULT_CAMPUS_CONFIG_KEY)
     } else {
       localStorage.setItem(DEFAULT_CAMPUS_KEY, id)
       // Keep older public sessions compatible with the renamed setting.
       localStorage.setItem(LEGACY_CAMPUS_KEY, id)
+      localStorage.setItem(DEFAULT_CAMPUS_CONFIG_KEY, getCanonicalCampusId())
     }
   } catch {}
 }
@@ -411,6 +427,7 @@ function normalizeSearchEntry(raw: unknown): SearchEntry | null {
     || type === 'entrance'
     || type === 'facility'
     || type === 'poi'
+    || type === 'node'
     ? type
     : 'room'
   const entry: SearchEntry = {
@@ -437,12 +454,71 @@ function normalizeSearchEntry(raw: unknown): SearchEntry | null {
   return entry
 }
 
+const FLOOR_ARRAY_FIELDS = [
+  'walls', 'roomAttributes', 'rooms', 'hallways', 'staircases', 'elevators',
+  'entrances', 'connectorStops', 'parametricComponents', 'pois', 'doors',
+  'windows', 'openings', 'entranceAccess',
+] as const
+
+function normalizeFloorData(raw: unknown): Record<string, unknown> | null {
+  if (!isRecord(raw) || typeof raw.level !== 'number' || !Number.isFinite(raw.level)) return null
+  const floor: Record<string, unknown> = { level: raw.level }
+  for (const key of ['id', 'label', 'shortLabel', 'planImageId', 'floorPlanState', 'textureId', 'svgOverlayId'] as const) {
+    if (typeof raw[key] === 'string') floor[key] = raw[key]
+  }
+  // Explicit null means the floor's plan was removed; do not revive a legacy URL.
+  if (raw.planImageId === null) floor.planImageId = null
+  for (const key of ['elevation', 'height', 'rotation'] as const) {
+    if (typeof raw[key] === 'number' && Number.isFinite(raw[key])) floor[key] = raw[key]
+  }
+  for (const key of ['visible', 'locked'] as const) {
+    if (typeof raw[key] === 'boolean') floor[key] = raw[key]
+  }
+  for (const key of ['offset', 'planAlignment', 'routeNetwork', 'metadata'] as const) {
+    if (isRecord(raw[key])) floor[key] = raw[key]
+  }
+  for (const key of FLOOR_ARRAY_FIELDS) {
+    if (Array.isArray(raw[key])) floor[key] = raw[key]
+  }
+  return floor
+}
+
+function normalizeFloorPlanUrls(raw: unknown): Building['floorPlanUrls'] {
+  if (!isRecord(raw)) return undefined
+  const urls: Record<number, string> = {}
+  for (const [key, value] of Object.entries(raw)) {
+    const level = Number(key)
+    if (Number.isFinite(level) && typeof value === 'string') urls[level] = value
+  }
+  return Object.keys(urls).length > 0 ? urls : undefined
+}
+
+function normalizeFloorPlanVisuals(raw: unknown): Building['floorPlanVisuals'] {
+  if (!isRecord(raw)) return undefined
+  const visuals: NonNullable<Building['floorPlanVisuals']> = {}
+  for (const [key, value] of Object.entries(raw)) {
+    const level = Number(key)
+    if (!Number.isFinite(level) || !isRecord(value) || typeof value.imageUrl !== 'string') continue
+    visuals[level] = {
+      imageUrl: value.imageUrl,
+      ...(isRecord(value.alignment) ? { alignment: value.alignment as NonNullable<Building['floorPlanVisuals']>[number]['alignment'] } : {}),
+    }
+  }
+  return Object.keys(visuals).length > 0 ? visuals : undefined
+}
+
 function normalizeBuilding(raw: unknown, campusId: string): Building | null {
   if (!isRecord(raw)) return null
-  const { id, name } = raw
-  if (typeof id !== 'string' || id === '' || typeof name !== 'string' || name === '') {
-    return null
-  }
+  const { id } = raw
+  if (typeof id !== 'string' || id === '') return null
+  const rawName = typeof raw.name === 'string' ? raw.name.trim() : ''
+  const fallbackCode = typeof raw.code === 'string' ? raw.code.trim() : ''
+  // Public snapshots can contain valid building geometry without an authored name.
+  // Keep that geometry renderable instead of dropping the building from the User App.
+  const name = rawName || fallbackCode || 'Unnamed building'
+  const floorData = Array.isArray(raw.floorData)
+    ? raw.floorData.map(normalizeFloorData).filter((floor): floor is Record<string, unknown> => floor !== null)
+    : []
   const floors: number[] = []
   if (Array.isArray(raw.floors)) {
     for (const f of raw.floors) {
@@ -452,6 +528,10 @@ function normalizeBuilding(raw: unknown, campusId: string): Building | null {
       else continue
       if (Number.isFinite(level) && !floors.includes(level)) floors.push(level)
     }
+  }
+  for (const floor of floorData) {
+    const level = floor.level as number
+    if (!floors.includes(level)) floors.push(level)
   }
   const building: Building = {
     id,
@@ -470,6 +550,17 @@ function normalizeBuilding(raw: unknown, campusId: string): Building | null {
   if (typeof raw.code === 'string') building.code = raw.code
   if (typeof raw.category === 'string') building.category = raw.category
   if (typeof raw.color === 'string') building.color = raw.color
+  if (typeof raw.description === 'string') building.description = raw.description
+  if (typeof raw.department === 'string') building.department = raw.department
+  if (typeof raw.floorPlanUrl === 'string') building.floorPlanUrl = raw.floorPlanUrl
+  if (typeof raw.rotation === 'number' && Number.isFinite(raw.rotation)) building.rotation = raw.rotation
+  if (Array.isArray(raw.aliases)) building.aliases = raw.aliases.filter((alias): alias is string => typeof alias === 'string')
+  if (isRecord(raw.metadata)) building.metadata = raw.metadata
+  if (Array.isArray(raw.staircases)) building.staircases = raw.staircases
+  if (Array.isArray(raw.elevators)) building.elevators = raw.elevators
+  if (floorData.length > 0) building.floorData = floorData
+  building.floorPlanUrls = normalizeFloorPlanUrls(raw.floorPlanUrls)
+  building.floorPlanVisuals = normalizeFloorPlanVisuals(raw.floorPlanVisuals)
   if (typeof raw.baseElevation === 'number') building.baseElevation = raw.baseElevation
   if (typeof raw.height === 'number') building.height = raw.height
   if (Array.isArray(raw.footprint)) {
@@ -481,6 +572,13 @@ function normalizeBuilding(raw: unknown, campusId: string): Building | null {
       )
       .filter((p): p is LatLng => p !== null)
     if (footprint.length > 0) building.footprint = footprint
+  }
+  if (Array.isArray(raw.outline)) {
+    const outline = raw.outline
+      .map((p) => isRecord(p) && typeof p.lat === 'number' && typeof p.lng === 'number'
+        ? { lat: p.lat, lng: p.lng } : null)
+      .filter((p): p is LatLng => p !== null)
+    if (outline.length > 0) building.outline = outline
   }
   if (Array.isArray(raw.entrances)) {
     const entrances = raw.entrances
@@ -552,6 +650,87 @@ function parseSearchEntries(raw: unknown): SearchEntry[] {
     .filter((e): e is SearchEntry => e !== null)
 }
 
+function includeGraphSnapshotNodes(entries: SearchEntry[], nodes: NavNode[]): SearchEntry[] {
+  const representedNodeIds = new Set(entries.flatMap((entry) => [entry.id, entry.nodeId ?? '']))
+  const unindexedNodes = nodes.filter((node) => !representedNodeIds.has(node.id))
+  const labelCounts = new Map<string, number>()
+  for (const node of unindexedNodes) {
+    const label = node.label?.trim() || node.name?.trim() || node.id
+    labelCounts.set(label, (labelCounts.get(label) ?? 0) + 1)
+  }
+
+  const nodeEntries = unindexedNodes.map((node): SearchEntry => {
+    const label = node.label?.trim() || node.name?.trim() || node.id
+    return {
+      id: node.id,
+      label: (labelCounts.get(label) ?? 0) > 1 ? `${label} (${node.id})` : label,
+      type: 'node',
+      nodeId: node.id,
+      position: node.position,
+      ...(node.buildingId ? { buildingId: node.buildingId } : {}),
+      ...(typeof node.floor === 'number' ? { floor: node.floor } : {}),
+      ...(node.type ? { tags: [node.type, node.id] } : { tags: [node.id] }),
+      source: 'graph-derived',
+      sourceId: node.id,
+    }
+  })
+
+  return [...entries, ...nodeEntries]
+}
+
+function buildingNodeId(entry: SearchEntry | undefined, building: Building, nodes: NavNode[]): string | undefined {
+  if (entry?.nodeId) {
+    const indexedNode = nodes.find((node) => node.id === entry.nodeId)
+    if (indexedNode && (!indexedNode.buildingId || indexedNode.buildingId === building.id)) {
+      return indexedNode.id
+    }
+  }
+
+  return nodes.find((node) => node.buildingId === building.id
+    && (node.type === 'entrance' || node.type === 'building_entrance'))?.id
+}
+
+function includeGraphSnapshotBuildings(
+  entries: SearchEntry[],
+  buildings: Building[],
+  nodes: NavNode[],
+): SearchEntry[] {
+  const normalizedEntries = entries.map((entry) => {
+    if (entry.type !== 'building') return entry
+    const relatedBuilding = buildings.find((building) =>
+      [entry.id, entry.buildingId, entry.sourceId].includes(building.id),
+    )
+    if (!relatedBuilding) return entry
+
+    const nodeId = buildingNodeId(entry, relatedBuilding, nodes)
+    const normalizedEntry = { ...entry }
+    if (nodeId) normalizedEntry.nodeId = nodeId
+    else delete normalizedEntry.nodeId
+    return normalizedEntry
+  })
+  const representedBuildingIds = new Set(normalizedEntries
+    .filter((entry) => entry.type === 'building')
+    .flatMap((entry) => [entry.id, entry.buildingId ?? '', entry.sourceId ?? '']))
+
+  const buildingEntries = buildings
+    .filter((building) => !representedBuildingIds.has(building.id))
+    .map((building): SearchEntry => {
+      const nodeId = buildingNodeId(undefined, building, nodes)
+      return {
+        id: building.id,
+        label: building.name,
+        type: 'building',
+        ...(building.center ? { position: building.center } : {}),
+        ...(building.code ? { tags: [building.code] } : {}),
+        ...(nodeId ? { nodeId } : {}),
+        source: 'graph-derived',
+        sourceId: building.id,
+      }
+    })
+
+  return [...normalizedEntries, ...buildingEntries]
+}
+
 function parseBuildings(raw: unknown, campusId: string): Building[] {
   if (!isRecord(raw) || !Array.isArray(raw.buildings)) return []
   return raw.buildings
@@ -559,9 +738,158 @@ function parseBuildings(raw: unknown, campusId: string): Building[] {
     .filter((b): b is Building => b !== null)
 }
 
-function parsePoi(raw: unknown): unknown[] {
-  if (isRecord(raw) && Array.isArray(raw.points)) return raw.points
-  return []
+function isValidWorldPosition(value: unknown): value is LatLng {
+  return validateWorldPointOfInterestGeometry({ type: 'point', position: value }).valid
+}
+
+function normalizePoi(raw: unknown): CampusPOI | null {
+  if (!isRecord(raw) || typeof raw.id !== 'string' || raw.id.trim().length === 0) return null
+
+  const hasGeometry = raw.geometry !== undefined
+  if (hasGeometry && !validateWorldPointOfInterestGeometry(raw.geometry).valid) return null
+  const geometry = hasGeometry ? raw.geometry as WorldPOIGeometry : undefined
+  const rawPosition = isValidWorldPosition(raw.position) ? raw.position : undefined
+  const position = rawPosition ?? (geometry ? getWorldPointOfInterestRepresentative(geometry) : undefined)
+  if (!position) return null
+
+  const buildingId = typeof raw.buildingId === 'string' ? raw.buildingId : undefined
+  const floor = typeof raw.floor === 'number' && Number.isFinite(raw.floor) ? raw.floor : undefined
+  const isOutdoor = raw.scope === 'outdoor'
+    || (geometry !== undefined && buildingId === undefined && floor === undefined)
+  const normalizedGeometry = geometry ?? (isOutdoor ? { type: 'point', position } : undefined)
+  const metadata = isRecord(raw.metadata) ? raw.metadata : undefined
+  const properties = isRecord(raw.properties) ? raw.properties : metadata ?? {}
+  const visibility = isRecord(raw.visibility) ? raw.visibility : undefined
+  const label = typeof raw.label === 'string' && raw.label.trim().length > 0
+    ? raw.label
+    : typeof raw.name === 'string' && raw.name.trim().length > 0
+      ? raw.name
+      : raw.id
+
+  const normalized: Record<string, unknown> = {
+    ...raw,
+    id: raw.id,
+    label,
+    ...(typeof raw.name === 'string' ? { name: raw.name } : {}),
+    category: typeof raw.category === 'string' ? raw.category : 'other',
+    position,
+    ...(buildingId ? { buildingId } : {}),
+    ...(floor !== undefined ? { floor } : {}),
+    properties,
+    ...(raw.source === 'authored' || raw.source === 'graph-derived' ? { source: raw.source } : {}),
+    ...(typeof raw.sourceId === 'string' ? { sourceId: raw.sourceId } : {}),
+    ...(typeof raw.floorId === 'string' ? { floorId: raw.floorId } : {}),
+    ...(normalizedGeometry ? { geometry: normalizedGeometry } : {}),
+    ...(visibility ? { visibility } : {}),
+    ...(metadata ? { metadata } : {}),
+    ...(typeof raw.showOnMap === 'boolean'
+      ? { showOnMap: raw.showOnMap }
+      : typeof visibility?.showOnMap === 'boolean'
+        ? { showOnMap: visibility.showOnMap }
+        : {}),
+  }
+  if (isOutdoor) normalized.scope = 'outdoor'
+  else delete normalized.scope
+  if (!normalizedGeometry) delete normalized.geometry
+  if (!visibility) delete normalized.visibility
+  if (!metadata) delete normalized.metadata
+  return normalized as unknown as CampusPOI
+}
+
+function parsePoi(publishedIndex: unknown, snapshotPois: unknown): CampusPOI[] {
+  const published = isRecord(publishedIndex) && Array.isArray(publishedIndex.points)
+    ? publishedIndex.points
+    : []
+  const snapshot = Array.isArray(snapshotPois) ? snapshotPois : []
+  const byId = new Map<string, CampusPOI>()
+
+  for (const raw of [...published, ...snapshot]) {
+    const poi = normalizePoi(raw)
+    if (poi && !byId.has(poi.id)) byId.set(poi.id, poi)
+  }
+
+  return [...byId.values()]
+}
+
+function includeSearchablePois(entries: SearchEntry[], pois: CampusPOI[]): SearchEntry[] {
+  const representedIds = new Set<string>()
+  for (const entry of entries) {
+    representedIds.add(entry.id)
+    if (entry.sourceId) representedIds.add(entry.sourceId)
+  }
+
+  const poiEntries: SearchEntry[] = []
+  for (const poi of pois) {
+    if (poi.visibility?.searchable !== true) continue
+    const sourceId = poi.sourceId ?? poi.id
+    if (representedIds.has(poi.id) || representedIds.has(sourceId)) continue
+
+    poiEntries.push({
+      id: poi.id,
+      label: poi.label,
+      type: 'poi',
+      ...(poi.nodeId ? { nodeId: poi.nodeId } : {}),
+      position: poi.position,
+      ...(poi.name && poi.name !== poi.label ? { tags: [poi.name] } : {}),
+      ...(poi.buildingId ? { buildingId: poi.buildingId } : {}),
+      ...(poi.floor !== undefined ? { floor: poi.floor } : {}),
+      category: poi.category,
+      ...(poi.floorId ? { floorId: poi.floorId } : {}),
+      source: poi.source ?? 'authored',
+      sourceId,
+    })
+    representedIds.add(poi.id)
+    representedIds.add(sourceId)
+  }
+
+  return [...entries, ...poiEntries]
+}
+
+function parseTraces(raw: unknown): TracePath[] {
+  if (!Array.isArray(raw)) return []
+  const byId = new Map<string, TracePath>()
+  const roadTypes = new Set<RoadType>(['arterial', 'connector', 'service', 'pedestrian'])
+
+  for (const value of raw) {
+    if (!isRecord(value) || typeof value.id !== 'string' || value.id.trim().length === 0) continue
+    const canonicalPolyline = isRecord(value.polyline) && Array.isArray(value.polyline.points)
+      ? value.polyline.points
+      : null
+    const sourcePoints = Array.isArray(value.points) ? value.points : canonicalPolyline
+    if (!sourcePoints || sourcePoints.length < 2 || !sourcePoints.every(isValidWorldPosition)) continue
+
+    const canonicalRoadType = (canonicalPolyline && roadTypes.has(value.type as RoadType))
+      ? value.type as RoadType
+      : roadTypes.has(value.roadType as RoadType)
+        ? value.roadType as RoadType
+        : undefined
+    const legacyTraceType = value.type === 'arterial' || value.type === 'connector'
+    const legacyPathType = value.type === 'path' || value.type === 'interior'
+    if (!canonicalRoadType && !legacyTraceType && !legacyPathType) continue
+    if (byId.has(value.id)) continue
+
+    const trace: TracePath = {
+      ...value,
+      id: value.id,
+      type: canonicalRoadType
+        ? canonicalRoadType === 'connector' || canonicalRoadType === 'pedestrian' ? 'connector' : 'arterial'
+        : value.type === 'connector' || legacyPathType ? 'connector' : 'arterial',
+      floor: typeof value.floor === 'number' && Number.isFinite(value.floor) ? value.floor : 0,
+      points: sourcePoints.map((point) => ({ ...point })) as LatLng[],
+      displayMode: value.displayMode === 'navigation-only' ? 'navigation-only' : 'visible',
+    } as TracePath
+    if (canonicalRoadType) trace.roadType = canonicalRoadType
+    else delete trace.roadType
+    if (canonicalPolyline) trace.polyline = { points: trace.points }
+    else delete trace.polyline
+    if (isRecord(value.metadata)) trace.metadata = value.metadata
+    else delete trace.metadata
+    if (isRecord(value.routing)) trace.routing = value.routing as TracePath['routing']
+    else delete trace.routing
+    byId.set(trace.id, trace)
+  }
+
+  return [...byId.values()]
 }
 
 function parseDoors(raw: unknown): DoorData[] {
@@ -595,16 +923,45 @@ function parseDoors(raw: unknown): DoorData[] {
     }))
 }
 
+function reportPublicCampusClientTiming(metrics: Record<string, number>) {
+  if (process.env.NODE_ENV !== 'development') return
+  console.debug('[public-campus] client timing', metrics)
+}
+
 async function fetchJson(url: string): Promise<unknown> {
+  const isPublicCampusRequest = url.startsWith('/api/public-campus?')
+  const requestStartedAt = performance.now()
   let res: Response
   try {
     res = await fetch(url)
   } catch {
+    if (isPublicCampusRequest) {
+      reportPublicCampusClientTiming({ requestToFailureMs: performance.now() - requestStartedAt })
+    }
     return null
   }
   if (!res.ok) return null
+
+  const headersReceivedAt = performance.now()
+  let responseText: string
   try {
-    return await res.json()
+    responseText = await res.text()
+  } catch {
+    return null
+  }
+
+  const bodyReadCompletedAt = performance.now()
+  try {
+    const parsed = JSON.parse(responseText) as unknown
+    if (isPublicCampusRequest) {
+      reportPublicCampusClientTiming({
+        timeToHeadersMs: headersReceivedAt - requestStartedAt,
+        bodyReadMs: bodyReadCompletedAt - headersReceivedAt,
+        jsonParseMs: performance.now() - bodyReadCompletedAt,
+        responseChars: responseText.length,
+      })
+    }
+    return parsed
   } catch {
     return null
   }
@@ -614,6 +971,7 @@ async function fetchFromPublicCampus(campusId: string): Promise<PublicCampusResu
   const doc = await fetchJson(`/api/public-campus?campus_id=${encodeURIComponent(campusId)}`)
   if (!isRecord(doc)) return null
   if (typeof doc.campusId !== 'string' || doc.campusId !== campusId) return null
+  const normalizationStartedAt = performance.now()
   const id = campusId
 
   // The /api/public-campus endpoint returns shape:
@@ -638,8 +996,17 @@ async function fetchFromPublicCampus(campusId: string): Promise<PublicCampusResu
       ?? metadata?.name,
     id,
   )
-  const searchEntries = artifacts ? parseSearchEntries(artifacts.searchIndex) : []
-  const poi = artifacts ? parsePoi(artifacts.poiIndex) : []
+  const compiledSearchEntries = artifacts ? parseSearchEntries(artifacts.searchIndex) : []
+  const poi = parsePoi(artifacts?.poiIndex, doc.pois)
+  const buildings = parseBuildings(doc, id)
+  const graphSearchEntries = doc.source === 'graph_snapshots'
+    ? includeGraphSnapshotNodes(compiledSearchEntries, graph.nodes)
+    : compiledSearchEntries
+  const entriesWithPois = includeSearchablePois(graphSearchEntries, poi)
+  const searchEntries = doc.source === 'graph_snapshots'
+    ? includeGraphSnapshotBuildings(entriesWithPois, buildings, graph.nodes)
+    : entriesWithPois
+  const traces = parseTraces(doc.traces)
   const floorGeometry = artifacts?.floorGeometry as FloorGeometryArtifact | undefined
   const panoramaIndex = artifacts?.panoramaIndex as PanoramaIndex | undefined
   const qrIndex = artifacts?.qrIndex as QrIndex | undefined
@@ -662,21 +1029,34 @@ async function fetchFromPublicCampus(campusId: string): Promise<PublicCampusResu
     nodes: graph.nodes,
     edges: graph.edges,
     searchEntries,
-    buildings: parseBuildings(doc, id),
+    buildings,
     components,
     doors,
     poi,
+    traces,
     boundingBox: graph.boundingBox,
     floorGeometry,
     panoramaIndex,
     qrIndex,
   }
-  return normalizePublicCampusResult({
+  const normalized = normalizePublicCampusResult({
     campusId: id,
     source: doc.source,
     revision: doc.revision ?? metadata?.revision ?? null,
     bundle,
   }, campusId)
+
+  if (normalized) {
+    reportPublicCampusClientTiming({
+      normalizationMs: performance.now() - normalizationStartedAt,
+      buildings: normalized.bundle.buildings.length,
+      nodes: normalized.bundle.nodes.length,
+      edges: normalized.bundle.edges.length,
+      pois: normalized.bundle.poi.length,
+      traces: normalized.bundle.traces.length,
+    })
+  }
+  return normalized
 }
 
 type CampusOrigin = 'cache' | 'network'
@@ -730,6 +1110,13 @@ function cacheRecord(result: PublicCampusResult): CachedCampus | null {
     source: 'published',
     payload: result.bundle,
   }
+}
+
+function hasFloorSpecificBuildingData(bundle: CampusBundle): boolean {
+  return bundle.buildings.some((building) =>
+    Boolean(building.floorData?.length)
+    || Boolean(building.floorPlanUrls && Object.keys(building.floorPlanUrls).length)
+    || Boolean(building.floorPlanVisuals && Object.keys(building.floorPlanVisuals).length))
 }
 
 export function createPublicStore(dependencies: PublicStoreDependencies = {}) {
@@ -976,6 +1363,13 @@ export function createPublicStore(dependencies: PublicStoreDependencies = {}) {
         && cachedCampus.source === network.source
         && cachedCampus.revision !== null
         && cachedCampus.revision === network.revision
+        // Earlier adapter versions cached published buildings without their
+        // floor fields. A matching revision must not pin that lossy projection.
+        && !(hasFloorSpecificBuildingData(network.bundle) && !hasFloorSpecificBuildingData(cachedCampus.bundle))
+        // Revision identity is insufficient for caches written by an older
+        // projection. The network must replace any incomplete runtime payload,
+        // including missing buildings, geometry, POIs, traces, and floor fields.
+        && JSON.stringify(cachedCampus.bundle) === JSON.stringify(network.bundle)
       if (!sameRevision) {
         set({
           ...hydrationState(network, 'network'),
@@ -1020,17 +1414,13 @@ export function createPublicStore(dependencies: PublicStoreDependencies = {}) {
   },
 
   search: (query) => {
-    const results = search(get().campus?.searchEntries ?? [], query)
-    // Hidden-but-searchable POIs are temporarily revealed while a query is
-    // active; clearing the query restores the hidden state (never persisted).
-    const revealedPoiIds = query.trim().length === 0
-      ? []
-      : results
-          .filter((entry) => entry.type === 'poi')
-          .map((entry) => entry.sourceId ?? entry.id)
-    set({ revealedPoiIds })
-    return results
+    return search(get().campus?.searchEntries ?? [], query)
   },
+  setRevealedPoiIds: (ids) => set((state) => {
+    const current = state.revealedPoiIds
+    if (current.length === ids.length && current.every((id, index) => id === ids[index])) return state
+    return { revealedPoiIds: [...ids] }
+  }),
   clearRevealedPoiIds: () => set({ revealedPoiIds: [] }),
 
   findRoute: (fromId, toId) =>

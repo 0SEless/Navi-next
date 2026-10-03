@@ -83,16 +83,6 @@ export function getSaveStatusModel({
     }
   }
 
-  if (syncStatus === 'syncing' && syncError === 'Save failed — retrying automatically') {
-    return {
-      label: 'Save failed — retrying automatically',
-      color: COLORS.warning,
-      detail: 'Your local changes are preserved while NAVI retries the temporary failure.',
-      showRecoveryActions: false,
-      diagnostic: syncError,
-    }
-  }
-
   if (syncStatus === 'syncing' || saveState === 'saving' || saveState === 'dirty-while-saving') {
     return {
       label: 'Saving...',

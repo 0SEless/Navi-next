@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import NavigationMap, {
   NavigationMapHost,
@@ -100,6 +100,17 @@ describe('NavigationMap scene adapter', () => {
       showCompass: false,
       showZoom: false,
     })
+  })
+
+  it('keeps the MapLibre host out of the shell content flow', async () => {
+    mapInstances.length = 0
+    renderNavigationMap({})
+
+    await waitFor(() => expect(mapInstances[0]).toBeDefined())
+    const host = screen.getByTestId('navigation-map-host')
+    host.classList.add('maplibregl-map')
+
+    expect(host.style.position).toBe('absolute')
   })
 
   it('passes an explicit maximum pitch to the first MapLibre construction', async () => {
