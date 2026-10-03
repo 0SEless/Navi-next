@@ -1,0 +1,47 @@
+name: artifact-compat
+
+# P1-T11 (R11.3): CI compatibility pipeline — runs on every artifact-format
+# change; a failed smoke test fails the job, which blocks merge when this
+# check is required. Pipeline: compile fixture → generate bundle → validate
+# schema → load through @navi/runtime → runtime smoke tests.
+
+on:
+  pull_request:
+    paths:
+      - 'packages/compiler/**'
+      - 'packages/core/src/types/package-format.ts'
+      - 'packages/core/src/types/navigation-artifacts.ts'
+      - 'packages/publisher/**'
+      - 'packages/runtime/**'
+      - 'scripts/artifact-compat-smoke.ts'
+      - '__tests__/artifact-compat-smoke.test.ts'
+      - '.github/workflows/artifact-compat.yml'
+  push:
+    paths:
+      - 'packages/compiler/**'
+      - 'packages/core/src/types/package-format.ts'
+      - 'packages/core/src/types/navigation-artifacts.ts'
+      - 'packages/publisher/**'
+      - 'packages/runtime/**'
+      - '.github/workflows/artifact-compat.yml'
+  workflow_dispatch:
+
+jobs:
+  artifact-compat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile → bundle → load → smoke (graph loads, route computes)
+        run: npm run test:artifact-compat
+
+      # Deliberately no continue-on-error: a failed smoke step fails the job,
+      # marking the check red so merge is blocked when required.

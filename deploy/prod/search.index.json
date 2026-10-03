@@ -1,0 +1,440 @@
+{
+  "version": "1.0.0",
+  "entries": [
+    {
+      "id": "search-bld-bld-main",
+      "label": "Main Building",
+      "type": "building",
+      "nodeId": "node-0",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "MAIN",
+        "administrative",
+        "Main",
+        "Administration Building"
+      ],
+      "buildingId": "bld-main"
+    },
+    {
+      "id": "search-rm-rm-main-lobby",
+      "label": "Main Lobby",
+      "type": "room",
+      "nodeId": "node-0",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "Lobby",
+        "lobby"
+      ],
+      "buildingId": "bld-main",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-main-101",
+      "label": "Registrar Office",
+      "type": "room",
+      "nodeId": "node-1",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "101",
+        "office"
+      ],
+      "buildingId": "bld-main",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-main-102",
+      "label": "Accounting Office",
+      "type": "room",
+      "nodeId": "node-2",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "102",
+        "office"
+      ],
+      "buildingId": "bld-main",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-main-103",
+      "label": "Room 103",
+      "type": "room",
+      "nodeId": "node-3",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "103",
+        "classroom"
+      ],
+      "buildingId": "bld-main",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-main-104",
+      "label": "Room 104",
+      "type": "room",
+      "nodeId": "node-4",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "104",
+        "classroom"
+      ],
+      "buildingId": "bld-main",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-main-g-restroom",
+      "label": "Restroom",
+      "type": "room",
+      "nodeId": "node-5",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "G-RR",
+        "restroom"
+      ],
+      "buildingId": "bld-main",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-main-201",
+      "label": "Faculty Room",
+      "type": "room",
+      "nodeId": "node-6",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "201",
+        "office"
+      ],
+      "buildingId": "bld-main",
+      "floor": 1
+    },
+    {
+      "id": "search-rm-rm-main-202",
+      "label": "Computer Lab",
+      "type": "room",
+      "nodeId": "node-7",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "202",
+        "lab"
+      ],
+      "buildingId": "bld-main",
+      "floor": 1
+    },
+    {
+      "id": "search-rm-rm-main-203",
+      "label": "Room 203",
+      "type": "room",
+      "nodeId": "node-8",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "203",
+        "classroom"
+      ],
+      "buildingId": "bld-main",
+      "floor": 1
+    },
+    {
+      "id": "search-rm-rm-main-204",
+      "label": "Room 204",
+      "type": "room",
+      "nodeId": "node-9",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "204",
+        "classroom"
+      ],
+      "buildingId": "bld-main",
+      "floor": 1
+    },
+    {
+      "id": "search-rm-rm-main-205",
+      "label": "Conference Room",
+      "type": "room",
+      "nodeId": "node-10",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "205",
+        "meeting"
+      ],
+      "buildingId": "bld-main",
+      "floor": 1
+    },
+    {
+      "id": "search-bld-bld-eng",
+      "label": "Engineering Building",
+      "type": "building",
+      "nodeId": "node-11",
+      "position": {
+        "lat": 11.816,
+        "lng": 122.171
+      },
+      "tags": [
+        "ENG",
+        "academic",
+        "Engineering",
+        "Tech Building"
+      ],
+      "buildingId": "bld-eng"
+    },
+    {
+      "id": "search-rm-rm-eng-lobby",
+      "label": "Engineering Lobby",
+      "type": "room",
+      "nodeId": "node-11",
+      "position": {
+        "lat": 11.816,
+        "lng": 122.171
+      },
+      "tags": [
+        "Lobby",
+        "lobby"
+      ],
+      "buildingId": "bld-eng",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-eng-101",
+      "label": "Electrical Lab",
+      "type": "room",
+      "nodeId": "node-12",
+      "position": {
+        "lat": 11.816,
+        "lng": 122.171
+      },
+      "tags": [
+        "101",
+        "lab"
+      ],
+      "buildingId": "bld-eng",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-eng-102",
+      "label": "Mechanical Lab",
+      "type": "room",
+      "nodeId": "node-13",
+      "position": {
+        "lat": 11.816,
+        "lng": 122.171
+      },
+      "tags": [
+        "102",
+        "lab"
+      ],
+      "buildingId": "bld-eng",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-eng-103",
+      "label": "Room 103",
+      "type": "room",
+      "nodeId": "node-14",
+      "position": {
+        "lat": 11.816,
+        "lng": 122.171
+      },
+      "tags": [
+        "103",
+        "classroom"
+      ],
+      "buildingId": "bld-eng",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-eng-104",
+      "label": "Room 104",
+      "type": "room",
+      "nodeId": "node-15",
+      "position": {
+        "lat": 11.816,
+        "lng": 122.171
+      },
+      "tags": [
+        "104",
+        "classroom"
+      ],
+      "buildingId": "bld-eng",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-eng-201",
+      "label": "Engineering Faculty",
+      "type": "room",
+      "nodeId": "node-16",
+      "position": {
+        "lat": 11.816,
+        "lng": 122.171
+      },
+      "tags": [
+        "201",
+        "office"
+      ],
+      "buildingId": "bld-eng",
+      "floor": 1
+    },
+    {
+      "id": "search-rm-rm-eng-202",
+      "label": "Drafting Room",
+      "type": "room",
+      "nodeId": "node-17",
+      "position": {
+        "lat": 11.816,
+        "lng": 122.171
+      },
+      "tags": [
+        "202",
+        "lab"
+      ],
+      "buildingId": "bld-eng",
+      "floor": 1
+    },
+    {
+      "id": "search-rm-rm-eng-203",
+      "label": "Room 203",
+      "type": "room",
+      "nodeId": "node-18",
+      "position": {
+        "lat": 11.816,
+        "lng": 122.171
+      },
+      "tags": [
+        "203",
+        "classroom"
+      ],
+      "buildingId": "bld-eng",
+      "floor": 1
+    },
+    {
+      "id": "search-rm-rm-eng-204",
+      "label": "Room 204",
+      "type": "room",
+      "nodeId": "node-19",
+      "position": {
+        "lat": 11.816,
+        "lng": 122.171
+      },
+      "tags": [
+        "204",
+        "classroom"
+      ],
+      "buildingId": "bld-eng",
+      "floor": 1
+    },
+    {
+      "id": "search-bld-bld-lib",
+      "label": "Library",
+      "type": "building",
+      "nodeId": "node-20",
+      "position": {
+        "lat": 11.822000000000001,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "LIB",
+        "library",
+        "Library",
+        "Learning Resource Center"
+      ],
+      "buildingId": "bld-lib"
+    },
+    {
+      "id": "search-rm-rm-lib-lobby",
+      "label": "Library Lobby",
+      "type": "room",
+      "nodeId": "node-20",
+      "position": {
+        "lat": 11.822000000000001,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "Lobby",
+        "lobby"
+      ],
+      "buildingId": "bld-lib",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-lib-reading",
+      "label": "Reading Area",
+      "type": "room",
+      "nodeId": "node-21",
+      "position": {
+        "lat": 11.822000000000001,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "Reading",
+        "library"
+      ],
+      "buildingId": "bld-lib",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-lib-stacks",
+      "label": "Book Stacks",
+      "type": "room",
+      "nodeId": "node-22",
+      "position": {
+        "lat": 11.822000000000001,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "Stacks",
+        "storage"
+      ],
+      "buildingId": "bld-lib",
+      "floor": 0
+    },
+    {
+      "id": "search-rm-rm-lib-office",
+      "label": "Librarian Office",
+      "type": "room",
+      "nodeId": "node-23",
+      "position": {
+        "lat": 11.822000000000001,
+        "lng": 122.16600000000001
+      },
+      "tags": [
+        "Office",
+        "office"
+      ],
+      "buildingId": "bld-lib",
+      "floor": 0
+    }
+  ]
+}

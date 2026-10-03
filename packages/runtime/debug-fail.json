@@ -1,0 +1,6 @@
+{
+  "success": false,
+  "code": "INVALID_REFERENCE",
+  "message": "Graph artifact is required for reference validation",
+  "durationMs": 3
+}

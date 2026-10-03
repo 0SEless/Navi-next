@@ -1,0 +1,33 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`compile regression (pre-M5 compatibility) > old compile() output structure matches baseline > legacy-edge-count 1`] = `1`;
+
+exports[`compile regression (pre-M5 compatibility) > old compile() output structure matches baseline > legacy-metadata 1`] = `
+{
+  "boundingBox": {
+    "maxLat": 14.000544915558748,
+    "maxLng": 121.00054629068772,
+    "minLat": 14,
+    "minLng": 121,
+  },
+  "buildings": 1,
+  "edgeCount": 1,
+  "floors": 1,
+  "nodeCount": 2,
+}
+`;
+
+exports[`compile regression (pre-M5 compatibility) > old compile() output structure matches baseline > legacy-node-count 1`] = `2`;
+
+exports[`compile regression (pre-M5 compatibility) > old compile() output structure matches baseline > legacy-report 1`] = `
+{
+  "corridorsExtracted": 0,
+  "edgesGenerated": 1,
+  "errors": [],
+  "nodesGenerated": 2,
+  "spacesExtracted": 1,
+  "transitionsExtracted": 1,
+  "validation": [],
+  "warnings": [],
+}
+`;

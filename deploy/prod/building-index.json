@@ -1,0 +1,261 @@
+{
+  "version": "1.0.0",
+  "buildings": [
+    {
+      "id": "bld-main",
+      "name": "Main Building",
+      "code": "MAIN",
+      "category": "administrative",
+      "position": {
+        "lat": 11.8185,
+        "lng": 122.16600000000001
+      },
+      "floors": [
+        {
+          "level": 0,
+          "label": "Ground Floor",
+          "elevation": 0,
+          "rooms": [
+            {
+              "id": "rm-main-lobby",
+              "name": "Main Lobby",
+              "number": "Lobby",
+              "nodeId": "node-0"
+            },
+            {
+              "id": "rm-main-101",
+              "name": "Registrar Office",
+              "number": "101",
+              "nodeId": "node-1"
+            },
+            {
+              "id": "rm-main-102",
+              "name": "Accounting Office",
+              "number": "102",
+              "nodeId": "node-2"
+            },
+            {
+              "id": "rm-main-103",
+              "name": "Room 103",
+              "number": "103",
+              "nodeId": "node-3"
+            },
+            {
+              "id": "rm-main-104",
+              "name": "Room 104",
+              "number": "104",
+              "nodeId": "node-4"
+            },
+            {
+              "id": "rm-main-g-restroom",
+              "name": "Restroom",
+              "number": "G-RR",
+              "nodeId": "node-5"
+            }
+          ]
+        },
+        {
+          "level": 1,
+          "label": "Second Floor",
+          "elevation": 4,
+          "rooms": [
+            {
+              "id": "rm-main-201",
+              "name": "Faculty Room",
+              "number": "201",
+              "nodeId": "node-6"
+            },
+            {
+              "id": "rm-main-202",
+              "name": "Computer Lab",
+              "number": "202",
+              "nodeId": "node-7"
+            },
+            {
+              "id": "rm-main-203",
+              "name": "Room 203",
+              "number": "203",
+              "nodeId": "node-8"
+            },
+            {
+              "id": "rm-main-204",
+              "name": "Room 204",
+              "number": "204",
+              "nodeId": "node-9"
+            },
+            {
+              "id": "rm-main-205",
+              "name": "Conference Room",
+              "number": "205",
+              "nodeId": "node-10"
+            }
+          ]
+        }
+      ],
+      "entrances": [
+        {
+          "id": "ent-main-front",
+          "label": "Main Entrance",
+          "position": {
+            "lat": 11.82,
+            "lng": 122.16550000000001
+          }
+        },
+        {
+          "id": "ent-main-side",
+          "label": "Side Entrance",
+          "position": {
+            "lat": 11.8218,
+            "lng": 122.168
+          }
+        }
+      ],
+      "nodeId": "node-0"
+    },
+    {
+      "id": "bld-eng",
+      "name": "Engineering Building",
+      "code": "ENG",
+      "category": "academic",
+      "position": {
+        "lat": 11.816,
+        "lng": 122.171
+      },
+      "floors": [
+        {
+          "level": 0,
+          "label": "Ground Floor",
+          "elevation": 0,
+          "rooms": [
+            {
+              "id": "rm-eng-lobby",
+              "name": "Engineering Lobby",
+              "number": "Lobby",
+              "nodeId": "node-11"
+            },
+            {
+              "id": "rm-eng-101",
+              "name": "Electrical Lab",
+              "number": "101",
+              "nodeId": "node-12"
+            },
+            {
+              "id": "rm-eng-102",
+              "name": "Mechanical Lab",
+              "number": "102",
+              "nodeId": "node-13"
+            },
+            {
+              "id": "rm-eng-103",
+              "name": "Room 103",
+              "number": "103",
+              "nodeId": "node-14"
+            },
+            {
+              "id": "rm-eng-104",
+              "name": "Room 104",
+              "number": "104",
+              "nodeId": "node-15"
+            }
+          ]
+        },
+        {
+          "level": 1,
+          "label": "Second Floor",
+          "elevation": 4,
+          "rooms": [
+            {
+              "id": "rm-eng-201",
+              "name": "Engineering Faculty",
+              "number": "201",
+              "nodeId": "node-16"
+            },
+            {
+              "id": "rm-eng-202",
+              "name": "Drafting Room",
+              "number": "202",
+              "nodeId": "node-17"
+            },
+            {
+              "id": "rm-eng-203",
+              "name": "Room 203",
+              "number": "203",
+              "nodeId": "node-18"
+            },
+            {
+              "id": "rm-eng-204",
+              "name": "Room 204",
+              "number": "204",
+              "nodeId": "node-19"
+            }
+          ]
+        }
+      ],
+      "entrances": [
+        {
+          "id": "ent-eng-front",
+          "label": "Engineering Entrance",
+          "position": {
+            "lat": 11.8175,
+            "lng": 122.1725
+          }
+        }
+      ],
+      "nodeId": "node-11"
+    },
+    {
+      "id": "bld-lib",
+      "name": "Library",
+      "code": "LIB",
+      "category": "library",
+      "position": {
+        "lat": 11.822000000000001,
+        "lng": 122.16600000000001
+      },
+      "floors": [
+        {
+          "level": 0,
+          "label": "Ground Floor",
+          "elevation": 0,
+          "rooms": [
+            {
+              "id": "rm-lib-lobby",
+              "name": "Library Lobby",
+              "number": "Lobby",
+              "nodeId": "node-20"
+            },
+            {
+              "id": "rm-lib-reading",
+              "name": "Reading Area",
+              "number": "Reading",
+              "nodeId": "node-21"
+            },
+            {
+              "id": "rm-lib-stacks",
+              "name": "Book Stacks",
+              "number": "Stacks",
+              "nodeId": "node-22"
+            },
+            {
+              "id": "rm-lib-office",
+              "name": "Librarian Office",
+              "number": "Office",
+              "nodeId": "node-23"
+            }
+          ]
+        }
+      ],
+      "entrances": [
+        {
+          "id": "ent-lib-front",
+          "label": "Library Entrance",
+          "position": {
+            "lat": 11.823,
+            "lng": 122.1658
+          }
+        }
+      ],
+      "nodeId": "node-20"
+    }
+  ]
+}

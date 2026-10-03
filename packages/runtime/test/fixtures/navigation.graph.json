@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0.0",
+  "campusId": "test-campus",
+  "checksum": "abc",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "transition",
+      "lat": 14,
+      "lng": 121,
+      "floor": 1,
+      "buildingId": "b1"
+    },
+    {
+      "id": "n2",
+      "type": "waypoint",
+      "lat": 14,
+      "lng": 121.0005,
+      "floor": 1,
+      "buildingId": "b1"
+    },
+    {
+      "id": "n3",
+      "type": "waypoint",
+      "lat": 14,
+      "lng": 121.001,
+      "floor": 1,
+      "buildingId": "b1"
+    },
+    {
+      "id": "n4",
+      "type": "transition",
+      "lat": 14.0005,
+      "lng": 121.0005,
+      "floor": 1,
+      "buildingId": "b1"
+    },
+    {
+      "id": "n5",
+      "type": "waypoint",
+      "lat": 14.0005,
+      "lng": 121.001,
+      "floor": 2,
+      "buildingId": "b1"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "n1",
+      "to": "n2",
+      "type": "walk",
+      "distance": 50,
+      "weight": 50
+    },
+    {
+      "id": "e2",
+      "from": "n2",
+      "to": "n3",
+      "type": "walk",
+      "distance": 40,
+      "weight": 40
+    },
+    {
+      "id": "e3",
+      "from": "n2",
+      "to": "n4",
+      "type": "walk",
+      "distance": 40,
+      "weight": 40
+    },
+    {
+      "id": "e4",
+      "from": "n4",
+      "to": "n5",
+      "type": "stairs",
+      "distance": 10,
+      "weight": 20
+    }
+  ]
+}

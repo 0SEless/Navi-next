@@ -1,0 +1,16 @@
+# Created by Vercel CLI
+vercel.json
+.next
+e2e-artifacts
+.superpowers
+.env*
+node_modules
+test-results
+temp
+graphify-out
+reports
+benchmark-output
+demo-output
+audit-artifacts
+*.log
+p4-*.png

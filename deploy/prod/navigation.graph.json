@@ -1,0 +1,1078 @@
+{
+  "version": "1.0.0",
+  "campusId": "ASU-Ibajay Campus",
+  "createdAt": "2026-07-09T06:27:28.531Z",
+  "checksum": "53fb3cb466d77b8014b60e3e07e1028d577abef3e4b0b202b45c052bddac4559",
+  "nodes": [
+    {
+      "id": "node-0",
+      "label": "Main Lobby",
+      "type": "space",
+      "position": {
+        "lat": 11.8197467121811,
+        "lng": 122.16771380356045
+      },
+      "floor": 0,
+      "buildingId": "bld-main",
+      "properties": {
+        "number": "Lobby",
+        "category": "lobby"
+      }
+    },
+    {
+      "id": "node-1",
+      "label": "Registrar Office",
+      "type": "space",
+      "position": {
+        "lat": 11.8198365432986,
+        "lng": 122.16766240840413
+      },
+      "floor": 0,
+      "buildingId": "bld-main",
+      "properties": {
+        "number": "101",
+        "category": "office"
+      }
+    },
+    {
+      "id": "node-2",
+      "label": "Accounting Office",
+      "type": "space",
+      "position": {
+        "lat": 11.8198365432986,
+        "lng": 122.16779089629492
+      },
+      "floor": 0,
+      "buildingId": "bld-main",
+      "properties": {
+        "number": "102",
+        "category": "office"
+      }
+    },
+    {
+      "id": "node-3",
+      "label": "Room 103",
+      "type": "space",
+      "position": {
+        "lat": 11.819940747394899,
+        "lng": 122.16766240840413
+      },
+      "floor": 0,
+      "buildingId": "bld-main",
+      "properties": {
+        "number": "103",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "node-4",
+      "label": "Room 104",
+      "type": "space",
+      "position": {
+        "lat": 11.819940747394899,
+        "lng": 122.16779089629492
+      },
+      "floor": 0,
+      "buildingId": "bld-main",
+      "properties": {
+        "number": "104",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "node-5",
+      "label": "Restroom",
+      "type": "space",
+      "position": {
+        "lat": 11.8197395256917,
+        "lng": 122.16789001552497
+      },
+      "floor": 0,
+      "buildingId": "bld-main",
+      "properties": {
+        "number": "G-RR",
+        "category": "restroom"
+      }
+    },
+    {
+      "id": "node-6",
+      "label": "Faculty Room",
+      "type": "space",
+      "position": {
+        "lat": 11.8197610851599,
+        "lng": 122.16766240840413
+      },
+      "floor": 1,
+      "buildingId": "bld-main",
+      "properties": {
+        "number": "201",
+        "category": "office"
+      }
+    },
+    {
+      "id": "node-7",
+      "label": "Computer Lab",
+      "type": "space",
+      "position": {
+        "lat": 11.8197610851599,
+        "lng": 122.16779089629492
+      },
+      "floor": 1,
+      "buildingId": "bld-main",
+      "properties": {
+        "number": "202",
+        "category": "lab"
+      }
+    },
+    {
+      "id": "node-8",
+      "label": "Room 203",
+      "type": "space",
+      "position": {
+        "lat": 11.8198868487244,
+        "lng": 122.16766240840413
+      },
+      "floor": 1,
+      "buildingId": "bld-main",
+      "properties": {
+        "number": "203",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "node-9",
+      "label": "Room 204",
+      "type": "space",
+      "position": {
+        "lat": 11.8198868487244,
+        "lng": 122.16779089629492
+      },
+      "floor": 1,
+      "buildingId": "bld-main",
+      "properties": {
+        "number": "204",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "node-10",
+      "label": "Conference Room",
+      "type": "space",
+      "position": {
+        "lat": 11.8198724757456,
+        "lng": 122.16789735769015
+      },
+      "floor": 1,
+      "buildingId": "bld-main",
+      "properties": {
+        "number": "205",
+        "category": "meeting"
+      }
+    },
+    {
+      "id": "node-11",
+      "label": "Engineering Lobby",
+      "type": "space",
+      "position": {
+        "lat": 11.8172395256917,
+        "lng": 122.17229177622694
+      },
+      "floor": 0,
+      "buildingId": "bld-eng",
+      "properties": {
+        "number": "Lobby",
+        "category": "lobby"
+      }
+    },
+    {
+      "id": "node-12",
+      "label": "Electrical Lab",
+      "type": "space",
+      "position": {
+        "lat": 11.8173329500539,
+        "lng": 122.17225506573617
+      },
+      "floor": 0,
+      "buildingId": "bld-eng",
+      "properties": {
+        "number": "101",
+        "category": "lab"
+      }
+    },
+    {
+      "id": "node-13",
+      "label": "Mechanical Lab",
+      "type": "space",
+      "position": {
+        "lat": 11.8173329500539,
+        "lng": 122.17236519720848
+      },
+      "floor": 0,
+      "buildingId": "bld-eng",
+      "properties": {
+        "number": "102",
+        "category": "lab"
+      }
+    },
+    {
+      "id": "node-14",
+      "label": "Room 103",
+      "type": "space",
+      "position": {
+        "lat": 11.817451527128998,
+        "lng": 122.17225506573617
+      },
+      "floor": 0,
+      "buildingId": "bld-eng",
+      "properties": {
+        "number": "103",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "node-15",
+      "label": "Room 104",
+      "type": "space",
+      "position": {
+        "lat": 11.817451527128998,
+        "lng": 122.17236519720848
+      },
+      "floor": 0,
+      "buildingId": "bld-eng",
+      "properties": {
+        "number": "104",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "node-16",
+      "label": "Engineering Faculty",
+      "type": "space",
+      "position": {
+        "lat": 11.8172538986705,
+        "lng": 122.17225506573617
+      },
+      "floor": 1,
+      "buildingId": "bld-eng",
+      "properties": {
+        "number": "201",
+        "category": "office"
+      }
+    },
+    {
+      "id": "node-17",
+      "label": "Drafting Room",
+      "type": "space",
+      "position": {
+        "lat": 11.8172538986705,
+        "lng": 122.17236519720848
+      },
+      "floor": 1,
+      "buildingId": "bld-eng",
+      "properties": {
+        "number": "202",
+        "category": "lab"
+      }
+    },
+    {
+      "id": "node-18",
+      "label": "Room 203",
+      "type": "space",
+      "position": {
+        "lat": 11.817361696011499,
+        "lng": 122.17225506573617
+      },
+      "floor": 1,
+      "buildingId": "bld-eng",
+      "properties": {
+        "number": "203",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "node-19",
+      "label": "Room 204",
+      "type": "space",
+      "position": {
+        "lat": 11.817361696011499,
+        "lng": 122.17236519720848
+      },
+      "floor": 1,
+      "buildingId": "bld-eng",
+      "properties": {
+        "number": "204",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "node-20",
+      "label": "Library Lobby",
+      "type": "space",
+      "position": {
+        "lat": 11.822835932447001,
+        "lng": 122.16728443585585
+      },
+      "floor": 0,
+      "buildingId": "bld-lib",
+      "properties": {
+        "number": "Lobby",
+        "category": "lobby"
+      }
+    },
+    {
+      "id": "node-21",
+      "label": "Reading Area",
+      "type": "space",
+      "position": {
+        "lat": 11.82292756018685,
+        "lng": 122.16728443585585
+      },
+      "floor": 0,
+      "buildingId": "bld-lib",
+      "properties": {
+        "number": "Reading",
+        "category": "library"
+      }
+    },
+    {
+      "id": "node-22",
+      "label": "Book Stacks",
+      "type": "space",
+      "position": {
+        "lat": 11.823051527128998,
+        "lng": 122.16728443585585
+      },
+      "floor": 0,
+      "buildingId": "bld-lib",
+      "properties": {
+        "number": "Stacks",
+        "category": "storage"
+      }
+    },
+    {
+      "id": "node-23",
+      "label": "Librarian Office",
+      "type": "space",
+      "position": {
+        "lat": 11.8228467121811,
+        "lng": 122.16742393857416
+      },
+      "floor": 0,
+      "buildingId": "bld-lib",
+      "properties": {
+        "number": "Office",
+        "category": "office"
+      }
+    },
+    {
+      "id": "node-24",
+      "label": "Main Entrance",
+      "type": "transition",
+      "position": {
+        "lat": 11.82,
+        "lng": 122.16550000000001
+      },
+      "floor": 0,
+      "buildingId": "bld-main",
+      "properties": {}
+    },
+    {
+      "id": "node-25",
+      "label": "Side Entrance",
+      "type": "transition",
+      "position": {
+        "lat": 11.8218,
+        "lng": 122.168
+      },
+      "floor": 0,
+      "buildingId": "bld-main",
+      "properties": {}
+    },
+    {
+      "id": "node-26",
+      "label": "Engineering Entrance",
+      "type": "transition",
+      "position": {
+        "lat": 11.8175,
+        "lng": 122.1725
+      },
+      "floor": 0,
+      "buildingId": "bld-eng",
+      "properties": {}
+    },
+    {
+      "id": "node-27",
+      "label": "Library Entrance",
+      "type": "transition",
+      "position": {
+        "lat": 11.823,
+        "lng": 122.1658
+      },
+      "floor": 0,
+      "buildingId": "bld-lib",
+      "properties": {}
+    },
+    {
+      "id": "node-28",
+      "label": "Main Gate Road start",
+      "type": "corridor",
+      "position": {
+        "lat": 11.815,
+        "lng": 122.165
+      },
+      "floor": 0,
+      "buildingId": "",
+      "properties": {}
+    },
+    {
+      "id": "node-29",
+      "label": "Main Gate Road end",
+      "type": "corridor",
+      "position": {
+        "lat": 11.82,
+        "lng": 122.168
+      },
+      "floor": 0,
+      "buildingId": "",
+      "properties": {}
+    },
+    {
+      "id": "node-30",
+      "label": "Main to Engineering start",
+      "type": "corridor",
+      "position": {
+        "lat": 11.82,
+        "lng": 122.168
+      },
+      "floor": 0,
+      "buildingId": "",
+      "properties": {}
+    },
+    {
+      "id": "node-31",
+      "label": "Main to Engineering end",
+      "type": "corridor",
+      "position": {
+        "lat": 11.8175,
+        "lng": 122.17200000000001
+      },
+      "floor": 0,
+      "buildingId": "",
+      "properties": {}
+    },
+    {
+      "id": "node-32",
+      "label": "Main to Library start",
+      "type": "corridor",
+      "position": {
+        "lat": 11.82,
+        "lng": 122.168
+      },
+      "floor": 0,
+      "buildingId": "",
+      "properties": {}
+    },
+    {
+      "id": "node-33",
+      "label": "Main to Library end",
+      "type": "corridor",
+      "position": {
+        "lat": 11.823,
+        "lng": 122.167
+      },
+      "floor": 0,
+      "buildingId": "",
+      "properties": {}
+    },
+    {
+      "id": "node-34",
+      "label": "Engineering to Library start",
+      "type": "corridor",
+      "position": {
+        "lat": 11.8175,
+        "lng": 122.1725
+      },
+      "floor": 0,
+      "buildingId": "",
+      "properties": {}
+    },
+    {
+      "id": "node-35",
+      "label": "Engineering to Library end",
+      "type": "corridor",
+      "position": {
+        "lat": 11.823,
+        "lng": 122.1675
+      },
+      "floor": 0,
+      "buildingId": "",
+      "properties": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-0",
+      "from": "node-28",
+      "to": "node-29",
+      "type": "walk",
+      "distance": 644.7630988949527,
+      "weight": 644.7630988949527
+    },
+    {
+      "id": "edge-1",
+      "from": "node-30",
+      "to": "node-31",
+      "type": "walk",
+      "distance": 516.5336964056728,
+      "weight": 516.5336964056728
+    },
+    {
+      "id": "edge-2",
+      "from": "node-32",
+      "to": "node-33",
+      "type": "walk",
+      "distance": 350.89058037194866,
+      "weight": 350.89058037194866
+    },
+    {
+      "id": "edge-3",
+      "from": "node-34",
+      "to": "node-35",
+      "type": "walk",
+      "distance": 818.6317750796607,
+      "weight": 818.6317750796607
+    },
+    {
+      "id": "edge-4",
+      "from": "node-0",
+      "to": "node-25",
+      "type": "walk",
+      "distance": 230.43017966235809,
+      "weight": 230.43017966235809
+    },
+    {
+      "id": "edge-5",
+      "from": "node-1",
+      "to": "node-25",
+      "type": "walk",
+      "distance": 221.39654686879396,
+      "weight": 221.39654686879396
+    },
+    {
+      "id": "edge-6",
+      "from": "node-1",
+      "to": "node-0",
+      "type": "walk",
+      "distance": 11.448360859459596,
+      "weight": 11.448360859459596
+    },
+    {
+      "id": "edge-7",
+      "from": "node-2",
+      "to": "node-25",
+      "type": "walk",
+      "distance": 219.50936702065556,
+      "weight": 219.50936702065556
+    },
+    {
+      "id": "edge-8",
+      "from": "node-2",
+      "to": "node-0",
+      "type": "walk",
+      "distance": 13.045186986114247,
+      "weight": 13.045186986114247
+    },
+    {
+      "id": "edge-9",
+      "from": "node-2",
+      "to": "node-1",
+      "type": "walk",
+      "distance": 13.98426335386617,
+      "weight": 13.98426335386617
+    },
+    {
+      "id": "edge-10",
+      "from": "node-3",
+      "to": "node-25",
+      "type": "walk",
+      "distance": 209.97906129616447,
+      "weight": 209.97906129616447
+    },
+    {
+      "id": "edge-11",
+      "from": "node-3",
+      "to": "node-0",
+      "type": "walk",
+      "distance": 22.28904936812224,
+      "weight": 22.28904936812224
+    },
+    {
+      "id": "edge-12",
+      "from": "node-3",
+      "to": "node-1",
+      "type": "walk",
+      "distance": 11.586966844063031,
+      "weight": 11.586966844063031
+    },
+    {
+      "id": "edge-13",
+      "from": "node-3",
+      "to": "node-2",
+      "type": "walk",
+      "distance": 18.160874091426287,
+      "weight": 18.160874091426287
+    },
+    {
+      "id": "edge-14",
+      "from": "node-4",
+      "to": "node-25",
+      "type": "walk",
+      "distance": 207.98831155598242,
+      "weight": 207.98831155598242
+    },
+    {
+      "id": "edge-15",
+      "from": "node-4",
+      "to": "node-0",
+      "type": "walk",
+      "distance": 23.14980872453784,
+      "weight": 23.14980872453784
+    },
+    {
+      "id": "edge-16",
+      "from": "node-4",
+      "to": "node-1",
+      "type": "walk",
+      "distance": 18.160874091426287,
+      "weight": 18.160874091426287
+    },
+    {
+      "id": "edge-17",
+      "from": "node-4",
+      "to": "node-2",
+      "type": "walk",
+      "distance": 11.586966844063031,
+      "weight": 11.586966844063031
+    },
+    {
+      "id": "edge-18",
+      "from": "node-4",
+      "to": "node-3",
+      "type": "walk",
+      "distance": 13.984258031371322,
+      "weight": 13.984258031371322
+    },
+    {
+      "id": "edge-19",
+      "from": "node-5",
+      "to": "node-25",
+      "type": "walk",
+      "distance": 229.4267797344491,
+      "weight": 229.4267797344491
+    },
+    {
+      "id": "edge-20",
+      "from": "node-5",
+      "to": "node-0",
+      "type": "walk",
+      "distance": 19.195065583934884,
+      "weight": 19.195065583934884
+    },
+    {
+      "id": "edge-21",
+      "from": "node-5",
+      "to": "node-1",
+      "type": "walk",
+      "distance": 27.019185293680913,
+      "weight": 27.019185293680913
+    },
+    {
+      "id": "edge-22",
+      "from": "node-5",
+      "to": "node-2",
+      "type": "walk",
+      "distance": 15.256343505251072,
+      "weight": 15.256343505251072
+    },
+    {
+      "id": "edge-23",
+      "from": "node-5",
+      "to": "node-3",
+      "type": "walk",
+      "distance": 33.38100095831256,
+      "weight": 33.38100095831256
+    },
+    {
+      "id": "edge-24",
+      "from": "node-5",
+      "to": "node-4",
+      "type": "walk",
+      "distance": 24.839707274078965,
+      "weight": 24.839707274078965
+    },
+    {
+      "id": "edge-25",
+      "from": "node-6",
+      "to": "node-10",
+      "type": "walk",
+      "distance": 28.413065539320588,
+      "weight": 28.413065539320588
+    },
+    {
+      "id": "edge-26",
+      "from": "node-7",
+      "to": "node-6",
+      "type": "walk",
+      "distance": 13.984267208057704,
+      "weight": 13.984267208057704
+    },
+    {
+      "id": "edge-27",
+      "from": "node-7",
+      "to": "node-10",
+      "type": "walk",
+      "distance": 16.960907014531873,
+      "weight": 16.960907014531873
+    },
+    {
+      "id": "edge-28",
+      "from": "node-8",
+      "to": "node-6",
+      "type": "walk",
+      "distance": 13.984270329062024,
+      "weight": 13.984270329062024
+    },
+    {
+      "id": "edge-29",
+      "from": "node-8",
+      "to": "node-7",
+      "type": "walk",
+      "distance": 19.77674028126317,
+      "weight": 19.77674028126317
+    },
+    {
+      "id": "edge-30",
+      "from": "node-8",
+      "to": "node-10",
+      "type": "walk",
+      "distance": 25.62111556904057,
+      "weight": 25.62111556904057
+    },
+    {
+      "id": "edge-31",
+      "from": "node-9",
+      "to": "node-6",
+      "type": "walk",
+      "distance": 19.77674028126317,
+      "weight": 19.77674028126317
+    },
+    {
+      "id": "edge-32",
+      "from": "node-9",
+      "to": "node-7",
+      "type": "walk",
+      "distance": 13.984270329062024,
+      "weight": 13.984270329062024
+    },
+    {
+      "id": "edge-33",
+      "from": "node-9",
+      "to": "node-8",
+      "type": "walk",
+      "distance": 13.984260784391676,
+      "weight": 13.984260784391676
+    },
+    {
+      "id": "edge-34",
+      "from": "node-9",
+      "to": "node-10",
+      "type": "walk",
+      "distance": 11.696660852912977,
+      "weight": 11.696660852912977
+    },
+    {
+      "id": "edge-35",
+      "from": "node-11",
+      "to": "node-26",
+      "type": "walk",
+      "distance": 36.776047747585515,
+      "weight": 36.776047747585515
+    },
+    {
+      "id": "edge-36",
+      "from": "node-12",
+      "to": "node-26",
+      "type": "walk",
+      "distance": 32.491445897781325,
+      "weight": 32.491445897781325
+    },
+    {
+      "id": "edge-37",
+      "from": "node-12",
+      "to": "node-11",
+      "type": "walk",
+      "distance": 11.130190800951999,
+      "weight": 11.130190800951999
+    },
+    {
+      "id": "edge-38",
+      "from": "node-13",
+      "to": "node-26",
+      "type": "walk",
+      "distance": 23.670510036388823,
+      "weight": 23.670510036388823
+    },
+    {
+      "id": "edge-39",
+      "from": "node-13",
+      "to": "node-11",
+      "type": "walk",
+      "distance": 13.106231994108441,
+      "weight": 13.106231994108441
+    },
+    {
+      "id": "edge-40",
+      "from": "node-13",
+      "to": "node-12",
+      "type": "walk",
+      "distance": 11.986511605731728,
+      "weight": 11.986511605731728
+    },
+    {
+      "id": "edge-41",
+      "from": "node-14",
+      "to": "node-26",
+      "type": "walk",
+      "distance": 27.197621066979863,
+      "weight": 27.197621066979863
+    },
+    {
+      "id": "edge-42",
+      "from": "node-14",
+      "to": "node-11",
+      "type": "walk",
+      "distance": 23.909688627747293,
+      "weight": 23.909688627747293
+    },
+    {
+      "id": "edge-43",
+      "from": "node-14",
+      "to": "node-12",
+      "type": "walk",
+      "distance": 13.185169167198174,
+      "weight": 13.185169167198174
+    },
+    {
+      "id": "edge-44",
+      "from": "node-14",
+      "to": "node-13",
+      "type": "walk",
+      "distance": 17.819233547738175,
+      "weight": 17.819233547738175
+    },
+    {
+      "id": "edge-45",
+      "from": "node-15",
+      "to": "node-26",
+      "type": "walk",
+      "distance": 15.630412504832822,
+      "weight": 15.630412504832822
+    },
+    {
+      "id": "edge-46",
+      "from": "node-15",
+      "to": "node-11",
+      "type": "walk",
+      "distance": 24.891069871661966,
+      "weight": 24.891069871661966
+    },
+    {
+      "id": "edge-47",
+      "from": "node-15",
+      "to": "node-12",
+      "type": "walk",
+      "distance": 17.819233547738175,
+      "weight": 17.819233547738175
+    },
+    {
+      "id": "edge-48",
+      "from": "node-15",
+      "to": "node-13",
+      "type": "walk",
+      "distance": 13.185169167198174,
+      "weight": 13.185169167198174
+    },
+    {
+      "id": "edge-49",
+      "from": "node-15",
+      "to": "node-14",
+      "type": "walk",
+      "distance": 11.986506415461049,
+      "weight": 11.986506415461049
+    },
+    {
+      "id": "edge-50",
+      "from": "node-17",
+      "to": "node-16",
+      "type": "walk",
+      "distance": 11.98651506588366,
+      "weight": 11.98651506588366
+    },
+    {
+      "id": "edge-51",
+      "from": "node-18",
+      "to": "node-16",
+      "type": "walk",
+      "distance": 11.986517424797436,
+      "weight": 11.986517424797436
+    },
+    {
+      "id": "edge-52",
+      "from": "node-18",
+      "to": "node-17",
+      "type": "walk",
+      "distance": 16.95149217156427,
+      "weight": 16.95149217156427
+    },
+    {
+      "id": "edge-53",
+      "from": "node-19",
+      "to": "node-16",
+      "type": "walk",
+      "distance": 16.95149217156427,
+      "weight": 16.95149217156427
+    },
+    {
+      "id": "edge-54",
+      "from": "node-19",
+      "to": "node-17",
+      "type": "walk",
+      "distance": 11.986517424797436,
+      "weight": 11.986517424797436
+    },
+    {
+      "id": "edge-55",
+      "from": "node-19",
+      "to": "node-18",
+      "type": "walk",
+      "distance": 11.986510347489004,
+      "weight": 11.986510347489004
+    },
+    {
+      "id": "edge-56",
+      "from": "node-20",
+      "to": "node-27",
+      "type": "walk",
+      "distance": 162.5868069862245,
+      "weight": 162.5868069862245
+    },
+    {
+      "id": "edge-57",
+      "from": "node-21",
+      "to": "node-27",
+      "type": "walk",
+      "distance": 161.7606830379948,
+      "weight": 161.7606830379948
+    },
+    {
+      "id": "edge-58",
+      "from": "node-21",
+      "to": "node-20",
+      "type": "walk",
+      "distance": 10.18853981109757,
+      "weight": 10.18853981109757
+    },
+    {
+      "id": "edge-59",
+      "from": "node-22",
+      "to": "node-27",
+      "type": "walk",
+      "distance": 161.66153687786576,
+      "weight": 161.66153687786576
+    },
+    {
+      "id": "edge-60",
+      "from": "node-22",
+      "to": "node-20",
+      "type": "walk",
+      "distance": 23.97303484959487,
+      "weight": 23.97303484959487
+    },
+    {
+      "id": "edge-61",
+      "from": "node-22",
+      "to": "node-21",
+      "type": "walk",
+      "distance": 13.7844950384973,
+      "weight": 13.7844950384973
+    },
+    {
+      "id": "edge-62",
+      "from": "node-23",
+      "to": "node-27",
+      "type": "walk",
+      "distance": 177.5629349544187,
+      "weight": 177.5629349544187
+    },
+    {
+      "id": "edge-63",
+      "from": "node-23",
+      "to": "node-20",
+      "type": "walk",
+      "distance": 15.230161489901668,
+      "weight": 15.230161489901668
+    },
+    {
+      "id": "edge-64",
+      "from": "node-23",
+      "to": "node-21",
+      "type": "walk",
+      "distance": 17.644802728506907,
+      "weight": 17.644802728506907
+    },
+    {
+      "id": "edge-65",
+      "from": "node-23",
+      "to": "node-22",
+      "type": "walk",
+      "distance": 27.371397431409015,
+      "weight": 27.371397431409015
+    },
+    {
+      "id": "edge-66",
+      "from": "node-25",
+      "to": "node-35",
+      "type": "walk",
+      "distance": 144.10391351366115,
+      "weight": 144.10391351366115
+    },
+    {
+      "id": "edge-67",
+      "from": "node-26",
+      "to": "node-34",
+      "type": "walk",
+      "distance": 0,
+      "weight": 0
+    },
+    {
+      "id": "edge-68",
+      "from": "node-27",
+      "to": "node-33",
+      "type": "walk",
+      "distance": 130.60314087517318,
+      "weight": 130.60314087517318
+    }
+  ],
+  "metadata": {
+    "nodeCount": 36,
+    "edgeCount": 69,
+    "buildings": 4,
+    "floors": 6,
+    "boundingBox": {
+      "minLng": 122.165,
+      "maxLng": 122.1725,
+      "minLat": 11.815,
+      "maxLat": 11.823051527128998
+    }
+  }
+}

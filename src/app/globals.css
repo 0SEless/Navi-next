@@ -1,0 +1,296 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navi-primary: #2563EB;
+  --navi-primary-light: #EFF6FF;
+  --navi-primary-dark: #1D4ED8;
+  --navi-accent: #7C3AED;
+  --navi-success: #059669;
+  --navi-warning: #D97706;
+  --navi-error: #DC2626;
+  --navi-sidebar: #0F172A;
+  --navi-sidebar-hover: #1E293B;
+  --navi-content: #F1F5F9;
+  --navi-card: #FFFFFF;
+  --navi-text: #0F172A;
+  --navi-text-secondary: #64748B;
+  --navi-text-sidebar: #94A3B8;
+  --navi-text-sidebar-active: #FFFFFF;
+  --navi-border: #E2E8F0;
+  --navi-sidebar-border: #1E293B;
+  --navi-radius: 8px;
+  --navi-radius-sm: 6px;
+  --navi-shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --navi-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+
+  /* ── Tint tokens for card accent backgrounds ── */
+  --navi-tint-blue: #EFF6FF;
+  --navi-tint-sky: #E0F2FE;
+  --navi-tint-amber: #FFFBEB;
+  --navi-tint-red: #FEF2F2;
+
+  /* ── Indoor visual language (Phase 2F) ── */
+
+  /* Legacy tokens — compatibility ONLY. Do NOT use in shared indoor layers. */
+  --navi-stair: #F59E0B;
+  --navi-elevator: #8B5CF6;
+  --navi-entrance: #8B5CF6;
+  --navi-door-int: #64748B;
+  --navi-door-emergency: #DC2626;
+  --navi-poi-bg: #F1F5F9;
+  --navi-poi-bg-selected: #DBEAFE;
+  --navi-poi-outline: #CBD5E1;
+  --navi-dest: #10B981;
+  --navi-accessibility: #06B6D4;
+
+  /* Canonical Phase 2F tokens — consumed by shared indoor layers (spec §4–§6). */
+  --navi-room-fill: #F8FAFC;
+  --navi-room-outline: #CBD5E1;
+  --navi-room-outline-width: 1;
+  --navi-room-selected-fill: #DBEAFE;
+  --navi-room-selected-outline: #3B82F6;
+  --navi-room-hover-fill: #F1F5F9;
+  --navi-hallway-fill: #F8FAFC;
+  --navi-hallway-outline: #E2E8F0;
+  --navi-hallway-outline-width: 1;
+  --navi-route: #3B82F6;
+  --navi-route-glow: rgba(59, 130, 246, 0.15);
+  --navi-route-width: 4;
+  --navi-route-glow-width: 6;
+  --navi-door-outline: #475569;
+  --navi-connector-stair: #F59E0B;
+  --navi-connector-elevator: #6366F1;
+  --navi-entrance-marker: #10B981;
+  --navi-route-dim: #94A3B8;
+  --navi-route-flow: #FFFFFF;
+}
+
+/* ── Public student shell tokens ──
+   The public surface owns its palette locally so the protected admin shell and
+   indoor route semantics keep their existing colors. */
+.navi-public-shell {
+  --navi-primary: #0F6B3A;
+  --navi-primary-bright: #22A06B;
+  --navi-primary-light: #E8F5EC;
+  --navi-primary-soft: #E8F5EC;
+  --navi-primary-dark: #0B512B;
+  --navi-info: #2563EB;
+  --navi-accent: #22A06B;
+  --navi-success: #0F6B3A;
+  --navi-warning: #F59E0B;
+  --navi-error: #DC2626;
+  --navi-sidebar: #FFFFFF;
+  --navi-sidebar-hover: #F3FAF5;
+  --navi-content: #F9FAFB;
+  --navi-card: #FFFFFF;
+  --navi-text: #1F2937;
+  --navi-text-secondary: #6B7280;
+  --navi-text-sidebar: #6B7280;
+  --navi-text-sidebar-active: #1F2937;
+  --navi-border: #E5E7EB;
+  --navi-sidebar-border: #E5E7EB;
+  --navi-shadow-sm: 0 1px 2px rgba(31, 41, 55, 0.05);
+  --navi-shadow: 0 1px 3px rgba(31, 41, 55, 0.08), 0 1px 2px rgba(31, 41, 55, 0.04);
+  --navi-tint-blue: #EFF6FF;
+  --navi-tint-sky: #F0F9FF;
+  --navi-tint-amber: #FFFBEB;
+  --navi-tint-red: #FEF2F2;
+  background: var(--navi-content);
+  color: var(--navi-text);
+}
+
+.navi-public-shell[data-theme="dark"] {
+  --navi-primary: #22A06B;
+  --navi-primary-bright: #8FE0B5;
+  --navi-primary-light: #153C27;
+  --navi-primary-soft: #153C27;
+  --navi-primary-dark: #B7F7D3;
+  --navi-info: #60A5FA;
+  --navi-accent: #8FE0B5;
+  --navi-success: #5FD49A;
+  --navi-warning: #FBBF24;
+  --navi-error: #F87171;
+  --navi-sidebar: #111827;
+  --navi-sidebar-hover: #1F2937;
+  --navi-content: #0F172A;
+  --navi-card: #1F2937;
+  --navi-text: #F9FAFB;
+  --navi-text-secondary: #9CA3AF;
+  --navi-text-sidebar: #9CA3AF;
+  --navi-text-sidebar-active: #F9FAFB;
+  --navi-border: #374151;
+  --navi-sidebar-border: #374151;
+  --navi-tint-blue: #172554;
+  --navi-tint-sky: #0C4A6E;
+  --navi-tint-amber: #451A03;
+  --navi-tint-red: #450A0A;
+}
+
+.navi-public-shell[data-reduced-motion="true"] *,
+.navi-public-shell[data-reduced-motion="true"] *::before,
+.navi-public-shell[data-reduced-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--navi-text);
+  background: var(--navi-content);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+#__next {
+  height: 100%;
+}
+
+/* ── Dark mode ── */
+html.dark {
+  --navi-primary: #3B82F6;
+  --navi-primary-light: #1E3A5F;
+  --navi-primary-dark: #60A5FA;
+  --navi-accent: #8B5CF6;
+  --navi-success: #34D399;
+  --navi-warning: #FBBF24;
+  --navi-error: #F87171;
+  --navi-sidebar: #0F172A;
+  --navi-sidebar-hover: #1E293B;
+  --navi-content: #0F172A;
+  --navi-card: #1E293B;
+  --navi-text: #F1F5F9;
+  --navi-text-secondary: #94A3B8;
+  --navi-text-sidebar: #94A3B8;
+  --navi-text-sidebar-active: #FFFFFF;
+  --navi-border: #334155;
+  --navi-sidebar-border: #1E293B;
+
+  /* ── Tint tokens (dark variants) ── */
+  --navi-tint-blue: #1E3A5F;
+  --navi-tint-sky: #0C4A6E;
+  --navi-tint-amber: #451A03;
+  --navi-tint-red: #450A0A;
+
+  /* ── Indoor visual language (Phase 2F) ── */
+
+  /* Legacy tokens — compatibility ONLY. Do NOT use in shared indoor layers. */
+  --navi-stair: #FBBF24;
+  --navi-elevator: #A78BFA;
+  --navi-entrance: #A78BFA;
+  --navi-door-int: #94A3B8;
+  --navi-door-emergency: #F87171;
+  --navi-poi-bg: #334155;
+  --navi-poi-bg-selected: #1E3A5F;
+  --navi-poi-outline: #475569;
+  --navi-dest: #34D399;
+  --navi-accessibility: #22D3EE;
+
+  /* Canonical Phase 2F tokens — dark-appropriate for the quiet
+     architectural hierarchy (NOT light values re-used). */
+  --navi-room-fill: #1E293B;          /* subtle lift from #0F172A canvas */
+  --navi-room-outline: #475569;       /* slate-600, quiet but visible */
+  --navi-room-outline-width: 1;
+  --navi-room-selected-fill: #1E3A5F; /* dark blue, still quiet */
+  --navi-room-selected-outline: #60A5FA; /* blue-400 → clear selection */
+  --navi-room-hover-fill: #334155;
+  --navi-hallway-fill: #182033;       /* quieter than rooms, near canvas */
+  --navi-hallway-outline: #334155;    /* slate-700, quieter than room outline */
+  --navi-hallway-outline-width: 1;
+  --navi-route: #3B82F6;
+  --navi-route-glow: rgba(59, 130, 246, 0.20);
+  --navi-route-width: 4;
+  --navi-route-glow-width: 6;
+  --navi-door-outline: #94A3B8;      /* neutral, visible on dark */
+  --navi-connector-stair: #FBBF24;   /* brighter amber for dark contrast */
+  --navi-connector-elevator: #A78BFA; /* lighter indigo */
+  --navi-entrance-marker: #34D399;    /* green, visible on dark */
+  --navi-route-dim: #475569;
+  --navi-route-flow: #E2E8F0;
+}
+
+html.dark body {
+  background: var(--navi-content);
+  color: var(--navi-text);
+}
+
+#public-map {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--navi-sidebar);
+  color: var(--navi-text-secondary);
+}
+
+/* ── Accessibility: global focus-visible ring ── */
+*:focus-visible {
+  outline: 2px solid var(--navi-primary);
+  outline-offset: 2px;
+}
+
+/* ── Accessibility: reduce motion when user prefers it ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Capture is a field tool: give it the full narrow viewport while retaining
+   the desktop admin shell for the other authenticated surfaces. */
+@media (max-width: 720px) {
+  .navi-admin-shell[data-screen="capture"] {
+    height: 100dvh !important;
+    min-height: 100dvh;
+  }
+
+  .navi-admin-shell[data-screen="capture"] .navi-admin-header {
+    display: none !important;
+  }
+
+  .navi-admin-shell[data-screen="capture"] main {
+    min-width: 0;
+  }
+
+  .navi-admin-shell[data-screen="capture"] .navi-admin-sidebar {
+    display: none !important;
+  }
+
+  .navi-admin-shell[data-screen="capture"] .navi-admin-brand {
+    min-width: 96px !important;
+  }
+
+  .navi-admin-shell[data-screen="capture"] .navi-admin-search {
+    max-width: none !important;
+    min-width: 0;
+  }
+
+.navi-admin-shell[data-screen="capture"] .navi-admin-context {
+    display: none !important;
+  }
+
+  .capture-map-container .maplibregl-ctrl-group button {
+    width: 44px;
+    height: 44px;
+    touch-action: manipulation;
+  }
+}

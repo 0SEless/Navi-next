@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "metadata": {
+    "campusId": "test-campus",
+    "name": "Test Campus",
+    "description": "Multi-floor pipeline test",
+    "lastModified": "2026-08-22T00:00:00Z",
+    "editorVersion": "1.0.0"
+  },
+  "buildings": [
+    {
+      "id": "bld-main",
+      "name": "Main Building",
+      "code": "MB",
+      "category": "academic",
+      "description": "Main academic building",
+      "footprint": {
+        "points": [
+          { "lat": 14.0, "lng": 121.0 },
+          { "lat": 14.001, "lng": 121.0 },
+          { "lat": 14.001, "lng": 121.001 },
+          { "lat": 14.0, "lng": 121.001 },
+          { "lat": 14.0, "lng": 121.0 }
+        ]
+      },
+      "baseElevation": 10,
+      "height": 12,
+      "rotation": 0,
+      "color": "#0066CC",
+      "floors": [
+        {
+          "id": "bld-main-f1",
+          "level": 1,
+          "label": "Ground Floor",
+          "elevation": 0,
+          "height": 4,
+          "offset": { "x": 0, "y": 0 },
+          "rooms": [
+            {
+              "id": "room-101",
+              "name": "Lecture Hall 101",
+              "number": "101",
+              "category": "classroom",
+              "polygon": { "points": [{ "x": 2, "y": 2 }, { "x": 12, "y": 2 }, { "x": 12, "y": 8 }, { "x": 2, "y": 8 }] },
+              "roomDoors": [
+                { "id": "d-101", "roomId": "room-101", "connectedToId": "hw-main", "connectedToType": "hallway", "doorType": "standard", "position": { "x": 7, "y": 8 }, "width": 1.5, "metadata": {} }
+              ],
+              "metadata": {}
+            },
+            {
+              "id": "room-102",
+              "name": "Office 102",
+              "number": "102",
+              "category": "office",
+              "polygon": { "points": [{ "x": 14, "y": 2 }, { "x": 22, "y": 2 }, { "x": 22, "y": 8 }, { "x": 14, "y": 8 }] },
+              "roomDoors": [],
+              "metadata": {}
+            }
+          ],
+          "hallways": [
+            { "id": "hw-main", "name": "Main Hallway", "polyline": { "points": [{ "x": 2, "y": 10 }, { "x": 22, "y": 10 }] }, "width": 3 }
+          ],
+          "staircases": [],
+          "elevators": [],
+          "entrances": [
+            { "id": "ent-main", "label": "Main Entrance", "position": { "x": 5, "y": 0 }, "level": 1, "type": "main", "hasQR": false, "hasPanorama": false }
+          ],
+          "connectorStops": [
+            { "id": "stop-stair-f1", "connectorId": "conn-stair-1", "label": "Stair Landing F1", "position": { "x": 24, "y": 5 }, "rotation": 0, "accessible": true, "anchors": [], "metadata": {} }
+          ],
+          "parametricComponents": [],
+          "metadata": {}
+        },
+        {
+          "id": "bld-main-f2",
+          "level": 2,
+          "label": "Second Floor",
+          "elevation": 4,
+          "height": 4,
+          "offset": { "x": 0, "y": 0 },
+          "rooms": [
+            {
+              "id": "room-201",
+              "name": "Classroom 201",
+              "number": "201",
+              "category": "classroom",
+              "polygon": { "points": [{ "x": 2, "y": 2 }, { "x": 12, "y": 2 }, { "x": 12, "y": 8 }, { "x": 2, "y": 8 }] },
+              "roomDoors": [
+                { "id": "d-201", "roomId": "room-201", "connectedToId": "hw-up", "connectedToType": "hallway", "doorType": "standard", "position": { "x": 7, "y": 8 }, "width": 1.5, "metadata": {} }
+              ],
+              "metadata": {}
+            }
+          ],
+          "hallways": [
+            { "id": "hw-up", "name": "Upper Hallway", "polyline": { "points": [{ "x": 2, "y": 10 }, { "x": 14, "y": 10 }] }, "width": 3 }
+          ],
+          "staircases": [],
+          "elevators": [],
+          "entrances": [],
+          "connectorStops": [
+            { "id": "stop-stair-f2", "connectorId": "conn-stair-1", "label": "Stair Landing F2", "position": { "x": 24, "y": 5 }, "rotation": 0, "accessible": true, "anchors": [], "metadata": {} }
+          ],
+          "parametricComponents": [],
+          "metadata": {}
+        }
+      ],
+      "verticalConnectors": [
+        {
+          "id": "conn-stair-1",
+          "type": "staircase",
+          "name": "Stair A",
+          "stopIds": ["stop-stair-f1", "stop-stair-f2"],
+          "accessible": true,
+          "metadata": {}
+        }
+      ],
+      "staircases": [
+        {
+          "id": "stair-1",
+          "buildingId": "bld-main",
+          "name": "Stair A",
+          "type": "open",
+          "accessible": true,
+          "fromLevel": 1,
+          "toLevel": 2,
+          "levels": {
+            "1": { "position": { "x": 24, "y": 5 }, "rotation": 0 },
+            "2": { "position": { "x": 24, "y": 5 }, "rotation": 0 }
+          }
+        }
+      ],
+      "elevators": [],
+      "aliases": [],
+      "metadata": {}
+    }
+  ],
+  "roads": [
+    {
+      "id": "road-1",
+      "name": "Campus Drive",
+      "polyline": { "points": [{ "lat": 14.0, "lng": 120.999 }, { "lat": 14.0, "lng": 121.002 }] },
+      "width": 6,
+      "surface": "paved",
+      "type": "arterial",
+      "metadata": {}
+    }
+  ],
+  "panoramas": [],
+  "qrCheckpoints": []
+}

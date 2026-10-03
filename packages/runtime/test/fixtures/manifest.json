@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "formatVersion": "0",
+  "campusId": "test-campus",
+  "campusName": "Test Campus",
+  "publishedAt": "2026-07-08T00:00:00Z",
+  "compilerVersion": "0.1.0",
+  "revision": "test",
+  "artifacts": {
+    "graph": { "path": "navigation.graph.json", "checksum": "3fbddb4944e472e5f3f4b3d5000bdb9778d1f659d05845a71882b4dd07ea80dc", "size": 1352, "schemaVersion": "1.0.0", "formatVersion": "0" },
+    "search": { "path": "search.index.json", "checksum": "9a749f0233c87f8ef288ca638a4c9061e89a9ebbd50c85eb7af1b0bb9670d4e6", "size": 226, "schemaVersion": "1.0.0", "formatVersion": "0" },
+    "buildings": { "path": "building-index.json", "checksum": "1a897a6159d41daef8db9345ad535615d024af83fe4baa8385ae710abce71368", "size": 342, "schemaVersion": "1.0.0", "formatVersion": "0" },
+    "poi": { "path": "poi.json", "checksum": "6dfeaead77dac9b131824d55e7e3853e4dbc26f29d0c3ba802a8598f6ca82601", "size": 47, "schemaVersion": "1.0.0", "formatVersion": "0" }
+  },
+  "metadata": {
+    "nodeCount": 0,
+    "edgeCount": 0,
+    "buildingCount": 1,
+    "floorCount": 1,
+    "boundingBox": { "minLat": 14.0, "maxLat": 14.001, "minLng": 121.0, "maxLng": 121.001 },
+    "routeable": true
+  }
+}

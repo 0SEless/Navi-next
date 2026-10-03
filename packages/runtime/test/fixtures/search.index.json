@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "entries": [
+    {
+      "id": "e1",
+      "label": "Room 101",
+      "type": "room",
+      "nodeId": "n1",
+      "lat": 14,
+      "lng": 121,
+      "tags": [
+        "room"
+      ]
+    }
+  ]
+}

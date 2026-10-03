@@ -1,0 +1,545 @@
+{
+  "version": "1.0.0",
+  "points": [
+    {
+      "id": "poi-node-0",
+      "label": "Main Lobby",
+      "category": "space",
+      "position": {
+        "lat": 11.8197467121811,
+        "lng": 122.16771380356045
+      },
+      "buildingId": "bld-main",
+      "floor": 0,
+      "nodeId": "node-0",
+      "properties": {
+        "number": "Lobby",
+        "category": "lobby"
+      }
+    },
+    {
+      "id": "poi-node-1",
+      "label": "Registrar Office",
+      "category": "space",
+      "position": {
+        "lat": 11.8198365432986,
+        "lng": 122.16766240840413
+      },
+      "buildingId": "bld-main",
+      "floor": 0,
+      "nodeId": "node-1",
+      "properties": {
+        "number": "101",
+        "category": "office"
+      }
+    },
+    {
+      "id": "poi-node-2",
+      "label": "Accounting Office",
+      "category": "space",
+      "position": {
+        "lat": 11.8198365432986,
+        "lng": 122.16779089629492
+      },
+      "buildingId": "bld-main",
+      "floor": 0,
+      "nodeId": "node-2",
+      "properties": {
+        "number": "102",
+        "category": "office"
+      }
+    },
+    {
+      "id": "poi-node-3",
+      "label": "Room 103",
+      "category": "space",
+      "position": {
+        "lat": 11.819940747394899,
+        "lng": 122.16766240840413
+      },
+      "buildingId": "bld-main",
+      "floor": 0,
+      "nodeId": "node-3",
+      "properties": {
+        "number": "103",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "poi-node-4",
+      "label": "Room 104",
+      "category": "space",
+      "position": {
+        "lat": 11.819940747394899,
+        "lng": 122.16779089629492
+      },
+      "buildingId": "bld-main",
+      "floor": 0,
+      "nodeId": "node-4",
+      "properties": {
+        "number": "104",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "poi-node-5",
+      "label": "Restroom",
+      "category": "space",
+      "position": {
+        "lat": 11.8197395256917,
+        "lng": 122.16789001552497
+      },
+      "buildingId": "bld-main",
+      "floor": 0,
+      "nodeId": "node-5",
+      "properties": {
+        "number": "G-RR",
+        "category": "restroom"
+      }
+    },
+    {
+      "id": "poi-node-6",
+      "label": "Faculty Room",
+      "category": "space",
+      "position": {
+        "lat": 11.8197610851599,
+        "lng": 122.16766240840413
+      },
+      "buildingId": "bld-main",
+      "floor": 1,
+      "nodeId": "node-6",
+      "properties": {
+        "number": "201",
+        "category": "office"
+      }
+    },
+    {
+      "id": "poi-node-7",
+      "label": "Computer Lab",
+      "category": "space",
+      "position": {
+        "lat": 11.8197610851599,
+        "lng": 122.16779089629492
+      },
+      "buildingId": "bld-main",
+      "floor": 1,
+      "nodeId": "node-7",
+      "properties": {
+        "number": "202",
+        "category": "lab"
+      }
+    },
+    {
+      "id": "poi-node-8",
+      "label": "Room 203",
+      "category": "space",
+      "position": {
+        "lat": 11.8198868487244,
+        "lng": 122.16766240840413
+      },
+      "buildingId": "bld-main",
+      "floor": 1,
+      "nodeId": "node-8",
+      "properties": {
+        "number": "203",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "poi-node-9",
+      "label": "Room 204",
+      "category": "space",
+      "position": {
+        "lat": 11.8198868487244,
+        "lng": 122.16779089629492
+      },
+      "buildingId": "bld-main",
+      "floor": 1,
+      "nodeId": "node-9",
+      "properties": {
+        "number": "204",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "poi-node-10",
+      "label": "Conference Room",
+      "category": "space",
+      "position": {
+        "lat": 11.8198724757456,
+        "lng": 122.16789735769015
+      },
+      "buildingId": "bld-main",
+      "floor": 1,
+      "nodeId": "node-10",
+      "properties": {
+        "number": "205",
+        "category": "meeting"
+      }
+    },
+    {
+      "id": "poi-node-11",
+      "label": "Engineering Lobby",
+      "category": "space",
+      "position": {
+        "lat": 11.8172395256917,
+        "lng": 122.17229177622694
+      },
+      "buildingId": "bld-eng",
+      "floor": 0,
+      "nodeId": "node-11",
+      "properties": {
+        "number": "Lobby",
+        "category": "lobby"
+      }
+    },
+    {
+      "id": "poi-node-12",
+      "label": "Electrical Lab",
+      "category": "space",
+      "position": {
+        "lat": 11.8173329500539,
+        "lng": 122.17225506573617
+      },
+      "buildingId": "bld-eng",
+      "floor": 0,
+      "nodeId": "node-12",
+      "properties": {
+        "number": "101",
+        "category": "lab"
+      }
+    },
+    {
+      "id": "poi-node-13",
+      "label": "Mechanical Lab",
+      "category": "space",
+      "position": {
+        "lat": 11.8173329500539,
+        "lng": 122.17236519720848
+      },
+      "buildingId": "bld-eng",
+      "floor": 0,
+      "nodeId": "node-13",
+      "properties": {
+        "number": "102",
+        "category": "lab"
+      }
+    },
+    {
+      "id": "poi-node-14",
+      "label": "Room 103",
+      "category": "space",
+      "position": {
+        "lat": 11.817451527128998,
+        "lng": 122.17225506573617
+      },
+      "buildingId": "bld-eng",
+      "floor": 0,
+      "nodeId": "node-14",
+      "properties": {
+        "number": "103",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "poi-node-15",
+      "label": "Room 104",
+      "category": "space",
+      "position": {
+        "lat": 11.817451527128998,
+        "lng": 122.17236519720848
+      },
+      "buildingId": "bld-eng",
+      "floor": 0,
+      "nodeId": "node-15",
+      "properties": {
+        "number": "104",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "poi-node-16",
+      "label": "Engineering Faculty",
+      "category": "space",
+      "position": {
+        "lat": 11.8172538986705,
+        "lng": 122.17225506573617
+      },
+      "buildingId": "bld-eng",
+      "floor": 1,
+      "nodeId": "node-16",
+      "properties": {
+        "number": "201",
+        "category": "office"
+      }
+    },
+    {
+      "id": "poi-node-17",
+      "label": "Drafting Room",
+      "category": "space",
+      "position": {
+        "lat": 11.8172538986705,
+        "lng": 122.17236519720848
+      },
+      "buildingId": "bld-eng",
+      "floor": 1,
+      "nodeId": "node-17",
+      "properties": {
+        "number": "202",
+        "category": "lab"
+      }
+    },
+    {
+      "id": "poi-node-18",
+      "label": "Room 203",
+      "category": "space",
+      "position": {
+        "lat": 11.817361696011499,
+        "lng": 122.17225506573617
+      },
+      "buildingId": "bld-eng",
+      "floor": 1,
+      "nodeId": "node-18",
+      "properties": {
+        "number": "203",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "poi-node-19",
+      "label": "Room 204",
+      "category": "space",
+      "position": {
+        "lat": 11.817361696011499,
+        "lng": 122.17236519720848
+      },
+      "buildingId": "bld-eng",
+      "floor": 1,
+      "nodeId": "node-19",
+      "properties": {
+        "number": "204",
+        "category": "classroom"
+      }
+    },
+    {
+      "id": "poi-node-20",
+      "label": "Library Lobby",
+      "category": "space",
+      "position": {
+        "lat": 11.822835932447001,
+        "lng": 122.16728443585585
+      },
+      "buildingId": "bld-lib",
+      "floor": 0,
+      "nodeId": "node-20",
+      "properties": {
+        "number": "Lobby",
+        "category": "lobby"
+      }
+    },
+    {
+      "id": "poi-node-21",
+      "label": "Reading Area",
+      "category": "space",
+      "position": {
+        "lat": 11.82292756018685,
+        "lng": 122.16728443585585
+      },
+      "buildingId": "bld-lib",
+      "floor": 0,
+      "nodeId": "node-21",
+      "properties": {
+        "number": "Reading",
+        "category": "library"
+      }
+    },
+    {
+      "id": "poi-node-22",
+      "label": "Book Stacks",
+      "category": "space",
+      "position": {
+        "lat": 11.823051527128998,
+        "lng": 122.16728443585585
+      },
+      "buildingId": "bld-lib",
+      "floor": 0,
+      "nodeId": "node-22",
+      "properties": {
+        "number": "Stacks",
+        "category": "storage"
+      }
+    },
+    {
+      "id": "poi-node-23",
+      "label": "Librarian Office",
+      "category": "space",
+      "position": {
+        "lat": 11.8228467121811,
+        "lng": 122.16742393857416
+      },
+      "buildingId": "bld-lib",
+      "floor": 0,
+      "nodeId": "node-23",
+      "properties": {
+        "number": "Office",
+        "category": "office"
+      }
+    },
+    {
+      "id": "poi-node-24",
+      "label": "Main Entrance",
+      "category": "transition",
+      "position": {
+        "lat": 11.82,
+        "lng": 122.16550000000001
+      },
+      "buildingId": "bld-main",
+      "floor": 0,
+      "nodeId": "node-24",
+      "properties": {}
+    },
+    {
+      "id": "poi-node-25",
+      "label": "Side Entrance",
+      "category": "transition",
+      "position": {
+        "lat": 11.8218,
+        "lng": 122.168
+      },
+      "buildingId": "bld-main",
+      "floor": 0,
+      "nodeId": "node-25",
+      "properties": {}
+    },
+    {
+      "id": "poi-node-26",
+      "label": "Engineering Entrance",
+      "category": "transition",
+      "position": {
+        "lat": 11.8175,
+        "lng": 122.1725
+      },
+      "buildingId": "bld-eng",
+      "floor": 0,
+      "nodeId": "node-26",
+      "properties": {}
+    },
+    {
+      "id": "poi-node-27",
+      "label": "Library Entrance",
+      "category": "transition",
+      "position": {
+        "lat": 11.823,
+        "lng": 122.1658
+      },
+      "buildingId": "bld-lib",
+      "floor": 0,
+      "nodeId": "node-27",
+      "properties": {}
+    },
+    {
+      "id": "poi-node-28",
+      "label": "Main Gate Road start",
+      "category": "corridor",
+      "position": {
+        "lat": 11.815,
+        "lng": 122.165
+      },
+      "buildingId": "",
+      "floor": 0,
+      "nodeId": "node-28",
+      "properties": {}
+    },
+    {
+      "id": "poi-node-29",
+      "label": "Main Gate Road end",
+      "category": "corridor",
+      "position": {
+        "lat": 11.82,
+        "lng": 122.168
+      },
+      "buildingId": "",
+      "floor": 0,
+      "nodeId": "node-29",
+      "properties": {}
+    },
+    {
+      "id": "poi-node-30",
+      "label": "Main to Engineering start",
+      "category": "corridor",
+      "position": {
+        "lat": 11.82,
+        "lng": 122.168
+      },
+      "buildingId": "",
+      "floor": 0,
+      "nodeId": "node-30",
+      "properties": {}
+    },
+    {
+      "id": "poi-node-31",
+      "label": "Main to Engineering end",
+      "category": "corridor",
+      "position": {
+        "lat": 11.8175,
+        "lng": 122.17200000000001
+      },
+      "buildingId": "",
+      "floor": 0,
+      "nodeId": "node-31",
+      "properties": {}
+    },
+    {
+      "id": "poi-node-32",
+      "label": "Main to Library start",
+      "category": "corridor",
+      "position": {
+        "lat": 11.82,
+        "lng": 122.168
+      },
+      "buildingId": "",
+      "floor": 0,
+      "nodeId": "node-32",
+      "properties": {}
+    },
+    {
+      "id": "poi-node-33",
+      "label": "Main to Library end",
+      "category": "corridor",
+      "position": {
+        "lat": 11.823,
+        "lng": 122.167
+      },
+      "buildingId": "",
+      "floor": 0,
+      "nodeId": "node-33",
+      "properties": {}
+    },
+    {
+      "id": "poi-node-34",
+      "label": "Engineering to Library start",
+      "category": "corridor",
+      "position": {
+        "lat": 11.8175,
+        "lng": 122.1725
+      },
+      "buildingId": "",
+      "floor": 0,
+      "nodeId": "node-34",
+      "properties": {}
+    },
+    {
+      "id": "poi-node-35",
+      "label": "Engineering to Library end",
+      "category": "corridor",
+      "position": {
+        "lat": 11.823,
+        "lng": 122.1675
+      },
+      "buildingId": "",
+      "floor": 0,
+      "nodeId": "node-35",
+      "properties": {}
+    }
+  ]
+}

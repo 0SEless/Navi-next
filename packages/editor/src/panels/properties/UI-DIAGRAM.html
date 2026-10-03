@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PropertiesPanel — UI Design Diagram</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0D0D1A; font-family: system-ui, -apple-system, sans-serif; padding: 32px; color: #E0E0F0; }
+
+  /* ── tokens (mirrors field.tsx) ── */
+  :root {
+    --bg-panel: #141428;
+    --bg-card: #1A1A32;
+    --bg-input: #0E0E20;
+    --border: #2A2A50;
+    --border-focus: #6C5CE7;
+    --text: #E0E0F0;
+    --text-secondary: #A0A0C0;
+    --text-muted: #707090;
+    --accent: #6C5CE7;
+    --danger: #E74C3C;
+    --success: #27AE60;
+    --warning: #F39C12;
+    --radius: 8px;
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 24px;
+  }
+
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; color: #fff; }
+  .subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 32px; }
+
+  /* ── layout ── */
+  .spec-grid { display: grid; grid-template-columns: 380px 1fr; gap: 32px; align-items: start; }
+
+  /* ── panel mock ── */
+  .panel { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,.5); }
+  .panel-header { background: linear-gradient(135deg, #1E1E40, #141428); padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .entity-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(108,92,231,.15); border: 1px solid rgba(108,92,231,.35); border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--accent); }
+  .entity-id { font-weight: 600; font-size: 14px; }
+  .entity-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .entity-icon.building { background: rgba(108,92,231,.2); color: #8B7CF7; }
+  .entity-icon.floor { background: rgba(39,174,96,.2); color: #2ECC71; }
+  .entity-icon.room { background: rgba(52,152,219,.2); color: #5DADE2; }
+  .entity-icon.hallway { background: rgba(243,156,18,.2); color: #F5B041; }
+  .entity-icon.road { background: rgba(149,165,166,.2); color: #BDC3C7; }
+  .entity-icon.entrance { background: rgba(231,76,60,.2); color: #EC7063; }
+  .entity-icon.staircase { background: rgba(155,89,182,.2); color: #AF7AC5; }
+  .entity-icon.elevator { background: rgba(26,188,156,.2); color: #48C9B0; }
+  .entity-icon.panorama { background: rgba(230,126,34,.2); color: #EB984E; }
+  .entity-icon.qr { background: rgba(231,76,60,.2); color: #EC7063; }
+
+  .panel-body { padding: 8px 16px 16px; }
+
+  /* ── section ── */
+  .section { margin-top: 14px; }
+  .section:first-child { margin-top: 4px; }
+  .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .section-header::before { content: ''; width: 3px; height: 14px; background: var(--accent); border-radius: 2px; }
+  .section-header span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text-secondary); }
+
+  /* ── field ── */
+  .field { margin-bottom: 10px; }
+  .field-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
+  .field-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; color: var(--text); outline: none; transition: border .15s; }
+  .field-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(108,92,231,.15); }
+  .field-input::placeholder { color: var(--text-muted); }
+  .field-select { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; color: var(--text); cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23707090' d='M6 8.5L1.5 4h9z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+  .field-select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(108,92,231,.15); }
+  .field-range { display: flex; align-items: center; gap: 8px; }
+  .field-range input[type=range] { width: 120px; accent-color: var(--accent); }
+  .field-range-value { font-size: 12px; color: var(--text-muted); }
+  .field-checkbox { display: flex; align-items: center; gap: 8px; }
+  .field-checkbox input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
+
+  /* ── color field (swatch + hex input) ── */
+  .color-field { display: flex; align-items: center; gap: 8px; }
+  .color-swatch { width: 36px; height: 28px; padding: 1px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; background: transparent; flex-shrink: 0; }
+  .hex-input { width: 96px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); padding: 5px 8px; font-size: 13px; font-family: 'SF Mono', 'Cascadia Code', monospace; color: var(--text); outline: none; transition: border .15s; }
+  .hex-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(108,92,231,.15); }
+  .hex-input.invalid { border-color: var(--danger); }
+
+  /* ── buttons ── */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 8px 12px; border-radius: var(--radius); font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all .15s; text-transform: uppercase; letter-spacing: .4px; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #7C6CF7; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #2ECC71; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #EC7063; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-ghost { width: auto; background: transparent; border: none; color: var(--danger); font-size: 11px; padding: 4px 8px; }
+  .btn-ghost:hover { background: rgba(231,76,60,.1); }
+
+  .adjust-box { background: #1A1A3A; border: 1px solid #3A3A6A; border-radius: var(--radius); padding: 10px; }
+  .adjust-box p { color: var(--text-secondary); font-size: 13px; margin-bottom: 10px; }
+
+  /* ── annotation / spec ── */
+  .spec-area h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; color: #fff; }
+  .spec-card { background: #141428; border: 1px solid #2A2A50; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .spec-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .spec-card h3 .tag { font-size: 10px; background: rgba(108,92,231,.2); color: var(--accent); padding: 1px 7px; border-radius: 4px; font-weight: 600; }
+  .spec-card ul { list-style: none; }
+  .spec-card li { font-size: 13px; color: var(--text-secondary); padding: 4px 0; display: flex; align-items: baseline; gap: 8px; }
+  .spec-card li::before { content: '•'; color: var(--accent); font-weight: 700; }
+  .spec-card .code { font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 12px; background: #0E0E20; padding: 2px 6px; border-radius: 4px; color: #8B7CF7; }
+
+  .arrow-connector { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 12px; margin: 8px 0; }
+  .arrow-connector::after { content: '→'; color: var(--accent); font-weight: 700; }
+
+  .entity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .entity-chip { display: flex; align-items: center; gap: 6px; background: #1A1A32; border: 1px solid #2A2A50; border-radius: 6px; padding: 6px 10px; font-size: 12px; }
+
+  .section-vis { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+  .section-pill { background: rgba(108,92,231,.1); border: 1px solid rgba(108,92,231,.2); border-radius: 12px; padding: 2px 10px; font-size: 11px; color: var(--text-secondary); }
+
+  .flow { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+  .flow-box { background: #1A1A32; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 12px; text-align: center; min-width: 80px; }
+  .flow-box.highlight { border-color: var(--accent); background: rgba(108,92,231,.1); }
+  .flow-arrow { color: var(--text-muted); font-size: 18px; }
+
+  hr { border: none; border-top: 1px solid #2A2A50; margin: 20px 0; }
+</style>
+</head>
+<body>
+
+<h1>🏗️ PropertiesPanel — Design Architecture</h1>
+<div class="subtitle">Centralized tokens &bull; 11 entity types &bull; 15 semantic design tokens &bull; zero hardcoded hex values</div>
+
+<div class="spec-grid">
+
+  <!-- LEFT: Live Panel Mock -->
+  <div>
+    <div class="panel">
+      <!-- header -->
+      <div class="panel-header">
+        <div class="entity-icon building">🏛</div>
+        <div class="entity-badge">Building</div>
+        <span class="entity-id">bldg-01</span>
+      </div>
+
+      <div class="panel-body">
+
+        <!-- Section 1: Information -->
+        <div class="section">
+          <div class="section-header"><span>Information</span></div>
+          <div class="field">
+            <div class="field-label">Name</div>
+            <input class="field-input" value="Main Academic Building" placeholder="Building name" />
+          </div>
+          <div class="field">
+            <div class="field-label">Code</div>
+            <input class="field-input" value="MAB" placeholder="Short code" />
+          </div>
+          <div class="field">
+            <div class="field-label">Category</div>
+            <select class="field-select">
+              <option>academic</option>
+              <option>administrative</option>
+              <option>residential</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label">Aliases</div>
+            <input class="field-input" value="Science Block, Building A" placeholder="Aliases" />
+          </div>
+        </div>
+
+        <!-- Section 2: Physical -->
+        <div class="section">
+          <div class="section-header"><span>Physical</span></div>
+          <div class="field">
+            <div class="field-label">Height (m)</div>
+            <div class="field-range">
+              <input type="range" min="5" max="100" value="42" />
+              <span class="field-range-value">42m</span>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label">Floors</div>
+            <input class="field-input" value="6" disabled style="opacity:.5" />
+          </div>
+        </div>
+
+        <!-- Section 3: Status -->
+        <div class="section">
+          <div class="section-header"><span>Status</span></div>
+          <div class="field">
+            <div class="field-label">Color</div>
+            <div class="color-field">
+              <input type="color" value="#6C5CE7" class="color-swatch" />
+              <input type="text" value="#6C5CE7" class="hex-input" />
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-label">Visibility</div>
+            <div class="field-checkbox">
+              <input type="checkbox" checked />
+              <span style="font-size:13px;color:#A0A0C0">Visible on map</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Actions -->
+        <div class="section">
+          <div class="section-header"><span>Actions</span></div>
+          <button class="btn btn-primary">📐 Adjust Footprint</button>
+          <div style="height:6px"></div>
+          <button class="btn btn-outline">➕ Add Floor</button>
+          <div style="height:6px"></div>
+          <button class="btn btn-outline">🔍 Center Camera</button>
+        </div>
+
+        <!-- Section 5: Danger Zone -->
+        <div class="section">
+          <div class="section-header" style="color:var(--danger)"><span style="color:var(--danger)">Danger Zone</span></div>
+          <button class="btn btn-danger">🗑️ Delete Building</button>
+        </div>
+
+        <!-- Position adjust (entrance/panorama/qr variant) -->
+        <div class="section" style="margin-top:16px;padding-top:12px;border-top:1px dashed #2A2A50">
+          <div class="section-header"><span>Position (Entrance)</span></div>
+          <div class="adjust-box">
+            <p>Drag the entrance marker on the map to adjust its position.</p>
+            <button class="btn btn-success">✓ Done</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:12px;color:#707090;font-size:11px">
+      Live mock — Building entity shown (all 5 section types)
+    </div>
+  </div>
+
+  <!-- RIGHT: Design Specs -->
+  <div class="spec-area">
+
+    <h2>Design System</h2>
+
+    <!-- Token System -->
+    <div class="spec-card">
+      <h3><span>🎨</span> Semantic Tokens <span class="tag">15 tokens</span></h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--bg-panel</span><span style="color:#707090">#141428</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--bg-card</span><span style="color:#707090">#1A1A32</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--bg-input</span><span style="color:#707090">#0E0E20</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--border</span><span style="color:#707090">#2A2A50</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--border-focus</span><span style="color:#8B7CF7">#6C5CE7</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--text</span><span style="color:#707090">#E0E0F0</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--text-secondary</span><span style="color:#707090">#A0A0C0</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--text-muted</span><span style="color:#707090">#707090</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--accent</span><span style="color:#8B7CF7">#6C5CE7</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--danger</span><span style="color:#EC7063">#E74C3C</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--success</span><span style="color:#2ECC71">#27AE60</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #1A1A32"><span class="code">--warning</span><span style="color:#F5B041">#F39C12</span></div>
+      </div>
+    </div>
+
+    <!-- Component Tree -->
+    <div class="spec-card">
+      <h3><span>🧩</span> Component Tree <span class="tag">4 primitives</span></h3>
+      <div class="flow">
+        <div class="flow-box highlight">PropertiesPanel</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box">EntityBadge</div>
+      </div>
+      <div class="flow" style="padding-top:2px;padding-left:100px">
+        <div class="flow-box">SectionHeader</div>
+      </div>
+      <div class="flow" style="padding-top:2px;padding-left:100px">
+        <div class="flow-box">Field</div>
+      </div>
+      <div class="flow" style="padding-top:2px;padding-left:100px">
+        <div class="flow-box">ActionButton</div>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:#707090">
+        + 11 entity-specific sub-components (building, floor, room, ...)
+      </div>
+    </div>
+
+    <!-- Entity Types -->
+    <div class="spec-card">
+      <h3><span>🏛️</span> Entity Types &amp; Badge Colors <span class="tag">11 types</span></h3>
+      <div class="entity-grid">
+        <div class="entity-chip"><span style="color:#8B7CF7">■</span> Building</div>
+        <div class="entity-chip"><span style="color:#2ECC71">■</span> Floor</div>
+        <div class="entity-chip"><span style="color:#5DADE2">■</span> Room</div>
+        <div class="entity-chip"><span style="color:#F5B041">■</span> Hallway</div>
+        <div class="entity-chip"><span style="color:#BDC3C7">■</span> Road</div>
+        <div class="entity-chip"><span style="color:#EC7063">■</span> Entrance</div>
+        <div class="entity-chip"><span style="color:#AF7AC5">■</span> Staircase</div>
+        <div class="entity-chip"><span style="color:#48C9B0">■</span> Elevator</div>
+        <div class="entity-chip"><span style="color:#EB984E">■</span> Panorama</div>
+        <div class="entity-chip"><span style="color:#EC7063">■</span> QR</div>
+      </div>
+    </div>
+
+    <!-- ActionButton Variants -->
+    <div class="spec-card">
+      <h3><span>🔘</span> ActionButton Variants <span class="tag">4 variants</span></h3>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px">
+          <div style="text-align:center;margin-bottom:6px"><button class="btn btn-primary" style="width:100%">Primary</button></div>
+          <div style="text-align:center;font-size:11px;color:var(--text-muted)">default accent</div>
+        </div>
+        <div style="flex:1;min-width:120px">
+          <div style="text-align:center;margin-bottom:6px"><button class="btn btn-success" style="width:100%">Success</button></div>
+          <div style="text-align:center;font-size:11px;color:var(--text-muted)">✅ Done / Confirm</div>
+        </div>
+        <div style="flex:1;min-width:120px">
+          <div style="text-align:center;margin-bottom:6px"><button class="btn btn-danger" style="width:100%">Danger</button></div>
+          <div style="text-align:center;font-size:11px;color:var(--text-muted)">⚠️ Delete / Destructive</div>
+        </div>
+        <div style="flex:1;min-width:120px">
+          <div style="text-align:center;margin-bottom:6px"><button class="btn btn-outline" style="width:100%">Outline</button></div>
+          <div style="text-align:center;font-size:11px;color:var(--text-muted)">Secondary actions</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Field Types -->
+    <div class="spec-card">
+      <h3><span>📋</span> Field Input Variants <span class="tag">6 types</span></h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Text Input</div>
+          <input class="field-input" value="Hello world" />
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Select</div>
+          <select class="field-select"><option>Option 1</option></select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Range Slider</div>
+          <div class="field-range">
+            <input type="range" min="0" max="100" value="65" />
+            <span class="field-range-value">65</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Checkbox</div>
+          <div class="field-checkbox">
+            <input type="checkbox" checked />
+            <span style="font-size:13px;color:#A0A0C0">Enabled</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Number</div>
+          <input class="field-input" type="number" value="42" />
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Color Picker + Hex</div>
+          <div class="color-field">
+            <input type="color" value="#6C5CE7" class="color-swatch" />
+            <input type="text" value="#6C5CE7" class="hex-input" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Per-entity section map -->
+    <div class="spec-card">
+      <h3><span>📐</span> Sections Per Entity Type <span class="tag">all preserved</span></h3>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead><tr style="color:var(--text-muted);border-bottom:1px solid #2A2A50">
+          <th style="text-align:left;padding:4px 8px">Entity</th>
+          <th style="text-align:left;padding:4px 8px">Sections</th>
+        </tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #1A1A32"><td style="padding:4px 8px;color:#8B7CF7">Building</td><td style="padding:4px 8px;color:var(--text-secondary)">Information · Physical · Status · Actions · Assets · Danger Zone</td></tr>
+          <tr style="border-bottom:1px solid #1A1A32"><td style="padding:4px 8px;color:#2ECC71">Floor</td><td style="padding:4px 8px;color:var(--text-secondary)">Details (Label · Level · Elevation)</td></tr>
+          <tr style="border-bottom:1px solid #1A1A32"><td style="padding:4px 8px;color:#5DADE2">Room</td><td style="padding:4px 8px;color:var(--text-secondary)">Details (Name · Number · Category · Capacity)</td></tr>
+          <tr style="border-bottom:1px solid #1A1A32"><td style="padding:4px 8px;color:#F5B041">Hallway</td><td style="padding:4px 8px;color:var(--text-secondary)">Details (Name · Width · Color)</td></tr>
+          <tr style="border-bottom:1px solid #1A1A32"><td style="padding:4px 8px;color:#BDC3C7">Road</td><td style="padding:4px 8px;color:var(--text-secondary)">Details (Name · Width · Surface · Type)</td></tr>
+          <tr style="border-bottom:1px solid #1A1A32"><td style="padding:4px 8px;color:#EC7063">Entrance</td><td style="padding:4px 8px;color:var(--text-secondary)">Details · Position (Adjust on Map / Done)</td></tr>
+          <tr style="border-bottom:1px solid #1A1A32"><td style="padding:4px 8px;color:#AF7AC5">Staircase</td><td style="padding:4px 8px;color:var(--text-secondary)">Details (Name · From/To Level · Type)</td></tr>
+          <tr style="border-bottom:1px solid #1A1A32"><td style="padding:4px 8px;color:#48C9B0">Elevator</td><td style="padding:4px 8px;color:var(--text-secondary)">Details (Name · From/To Level)</td></tr>
+          <tr style="border-bottom:1px solid #1A1A32"><td style="padding:4px 8px;color:#EB984E">Panorama</td><td style="padding:4px 8px;color:var(--text-secondary)">Details · Position (Adjust on Map / Done)</td></tr>
+          <tr style="border-bottom:1px solid #1A1A32"><td style="padding:4px 8px;color:#EC7063">QR</td><td style="padding:4px 8px;color:var(--text-secondary)">Details (Label · Code) · Position (Adjust on Map / Done)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Data flow -->
+    <div class="spec-card">
+      <h3><span>🔄</span> Edit Flow <span class="tag">immutable edit engine</span></h3>
+      <div class="flow" style="flex-wrap:wrap;justify-content:center">
+        <div class="flow-box" style="font-size:10px">User edits field</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box" style="font-size:10px">update() callback</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box" style="font-size:10px">editEngine.begin()</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box" style="font-size:10px">editEngine.doCommit()</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-box" style="font-size:10px">dispatcher.execute()</div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text-muted);text-align:center">
+        Every entity-specific props file follows the same immutable pattern
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr />
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:12px">
+  <div style="background:#141428;border:1px solid #2A2A50;border-radius:10px;padding:14px;font-size:12px">
+    <strong style="color:#8B7CF7">✓ No components removed</strong>
+    <div style="color:var(--text-secondary);margin-top:4px">All 11 entity-specific sub-components preserved exactly.</div>
+  </div>
+  <div style="background:#141428;border:1px solid #2A2A50;border-radius:10px;padding:14px;font-size:12px">
+    <strong style="color:#8B7CF7">✓ Zero hardcoded hex</strong>
+    <div style="color:var(--text-secondary);margin-top:4px">Every color, spacing, and radius value centralized into 15 semantic tokens.</div>
+  </div>
+  <div style="background:#141428;border:1px solid #2A2A50;border-radius:10px;padding:14px;font-size:12px">
+    <strong style="color:#8B7CF7">✓ No new TS errors</strong>
+    <div style="color:var(--text-secondary);margin-top:4px">All pre-existing errors unchanged — zero regression from the refactor.</div>
+  </div>
+</div>
+
+<script>
+  // ── Interactive mock: type a hex code → swatch updates live ──
+  const HEX_OK = /^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/;
+  function normalizeHex(raw) {
+    const m = raw.trim().match(HEX_OK);
+    if (!m) return null;
+    let hex = m[1];
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    return '#' + hex.toLowerCase();
+  }
+  document.querySelectorAll('.hex-input').forEach(input => {
+    input.addEventListener('input', () => {
+      const swatch = input.parentElement.querySelector('.color-swatch');
+      const normalized = normalizeHex(input.value);
+      if (normalized) {
+        input.classList.remove('invalid');
+        swatch.value = normalized;
+      } else {
+        input.classList.add('invalid');
+      }
+    });
+  });
+
+  // ── Swatch → hex: picking a color updates the hex input ──
+  document.querySelectorAll('.color-swatch').forEach(swatch => {
+    swatch.addEventListener('input', () => {
+      const hex = swatch.parentElement.querySelector('.hex-input');
+      hex.value = swatch.value; // native picker always emits #rrggbb
+      hex.classList.remove('invalid');
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "buildings": [
+    {
+      "id": "b1",
+      "name": "Building A",
+      "code": "BA",
+      "position": {
+        "lng": 121,
+        "lat": 14
+      },
+      "floors": [
+        {
+          "level": 1,
+          "label": "Ground",
+          "nodeIds": []
+        }
+      ],
+      "entrances": []
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@navi/runtime",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./engine": "./src/engine/index.ts",
+    "./loader": "./src/loader/index.ts",
+    "./routing": "./src/routing/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "check:react-leak": "powershell -Command \"if (Select-String -Path src/**/*.ts -Pattern \\\"from 'react'\\\" -Quiet) { exit 1 }\""
+  },
+  "dependencies": {
+    "@navi/core": "*",
+    "@navi/compiler": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "^4.1.9"
+  }
+}

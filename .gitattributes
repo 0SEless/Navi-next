@@ -1,0 +1,6 @@
+packages/runtime/test/fixtures/*.json text eol=lf
+packages/runtime/test/fixtures/* -text
+packages/runtime/test/fixtures/navigation.graph.json -text
+packages/runtime/test/fixtures/building-index.json -text
+packages/runtime/test/fixtures/search.index.json -text
+packages/runtime/test/fixtures/poi.json -text
